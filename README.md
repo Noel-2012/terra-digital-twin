@@ -1,637 +1,341 @@
-TERRA — Planetary Earth Intelligence Platform
+TERRA — Scientific Earth Forecast Engine v5
 
-TERRA v4 — Real Earth + 3D + Maps + Export
+TERRA v5 is the next stage of the TERRA Planetary Digital Twin concept.
 
-TERRA is an experimental planetary Earth-system platform that brings together:
+The goal is to move from a visual concept toward a real-data, model-agnostic Earth-system visualisation and forecasting interface.
 
-a realistic 3D Earth
+What is new in v5
 
-real geographic maps
+Interactive geographic map using Leaflet/OpenStreetMap.
 
-satellite Earth-observation imagery
+Country selection and manual latitude/longitude selection.
 
-selectable Earth-system variables
+Browser geolocation.
 
-historical/present/future temporal navigation
+Real hourly forecast data from the Open-Meteo API.
 
-forecasting and scenario interfaces
+Hourly and 24-hour/daily forecast modes.
 
-AI interpretation architecture
+Multiple environmental variables:
 
-uncertainty and provenance
+2 m temperature
 
-result image export
+relative humidity
 
-result PDF export
+10 m wind speed
 
-The long-term goal is to create a modular environment in which many Earth-system datasets, physical models, statistical models and AI models can be explored through one spatial interface.
-
-Important: v4 contains real-world geographic and satellite imagery layers, but its environmental values and future forecast trajectories are still prototype calculations. It is not yet an operational scientific forecasting system.
-
-What changed in v4?
-
-The previous TERRA version demonstrated the idea with a 3D Earth interface.
-
-TERRA v4 starts moving toward a real Earth-data platform.
-
-New capabilities
-
-Real-world visualisation
-
-Realistic Earth texture
-
-Earth cloud layer
-
-Interactive 3D globe
-
-Real geographic map
-
-Country/region selection
-
-Map clicking
-
-Location focus
-
-Satellite imagery layer
-
-Earth observation
-
-The map can display NASA GIBS satellite imagery.
-
-NASA's Global Imagery Browse Services provides standardized map-tile services, including WMTS, WMS and TMS access. citehttps://nasa-gibs.github.io/gibs-api-docs/access-basics/
-
-Copernicus-ready architecture
-
-The next data connectors can use the Copernicus Data Space Ecosystem. Its services include catalogue APIs, STAC, openEO, Sentinel Hub and OGC services. citehttps://documentation.dataspace.copernicus.eu/APIs.html
-
-The Copernicus platform provides access to Sentinel and other Earth-observation collections and supports visualization, processing and downloading through APIs. citehttps://dataspace.copernicus.eu/analyse/apis
-
-Export
-
-Users can export the current result panel as:
-
-PNG
-
-PDF
-
-The TERRA workflow
-
-                  TERRA
-                    |
-          +---------+---------+
-          |         |         |
-        WHERE      WHAT      WHEN
-          |         |         |
-       Location   Variable   Time
-          |         |         |
-          +---------+---------+
-                    |
-                    v
-                 HOW?
-                    |
-       +------------+------------+
-       |            |            |
-    OBSERVE      FORECAST     SCENARIO
-       |            |            |
-       +------------+------------+
-                    |
-                    v
-             TERRA ENGINE
-                    |
-       +------------+------------+
-       |            |            |
-      DATA       PHYSICS        AI
-       |            |            |
-       +------------+------------+
-                    |
-                    v
-              EARTH STATE
-                    |
-          +---------+---------+
-          |         |         |
-        3D EARTH   MAP      REPORT
-
-Real Earth imagery vs scientific variables
-
-TERRA now makes an important distinction.
-
-Real Earth imagery
-
-The application can display actual geographic/satellite imagery.
-
-For example, the NASA GIBS layer can provide satellite-derived imagery for the map. NASA Worldview is also a real Earth-observation visualization system for exploring the past and present planet. citehttps://worldview.earthdata.nasa.gov/index.html
-
-Scientific variable
-
-A variable such as:
-
-PM2.5
-
-temperature
-
-mercury
-
-ozone
-
-soil moisture
-
-NDVI
-
-sea-surface temperature
+surface pressure
 
 precipitation
 
-requires a specific scientific dataset or model.
+cloud cover
 
-TERRA's variable registry is therefore deliberately separate from its map.
+Scientific map-style field visualisation.
 
-This prevents the software from pretending that a satellite photograph is automatically a measurement of every environmental variable.
+Forecast trajectory chart.
 
-Real Earth data architecture
+Daily summary table.
 
-The target architecture is:
+3D Earth context view.
 
-                    TERRA UI
-                       |
-                       v
-                  DATA API LAYER
-                       |
-       +---------------+----------------+
-       |               |                |
-       v               v                v
-   SATELLITES       REANALYSIS       OBSERVATIONS
-       |               |                |
- Sentinel         ERA5 etc.         Stations
- MODIS            Climate           Sensors
- VIIRS            Reanalysis        Networks
-       |               |                |
-       +---------------+----------------+
-                       |
-                       v
-                 DATA HARMONISER
-                       |
-                       v
-                EARTH STATE LAYER
-                       |
-          +------------+------------+
-          |            |            |
-        MAP        TIME SERIES   3D GLOBE
-                       |
-                       v
-                 MODEL ENGINE
-                       |
-             +---------+---------+
-             |                   |
-           PHYSICS               AI
-             |                   |
-             +---------+---------+
-                       |
-                       v
-               FORECAST ENSEMBLE
-                       |
-             +---------+---------+
-             |                   |
-         PREDICTION          UNCERTAINTY
+Data provenance panel.
 
-First real datasets
+PNG export.
 
-1. Satellite imagery
+PDF export.
 
-NASA GIBS is the first live Earth-observation visual layer.
+Scientific interpretation generated from the retrieved values.
 
-This gives TERRA a real-world visual Earth immediately.
+Important scientific distinction
 
-NASA GIBS provides tiled services that can be consumed by mapping applications. citehttps://nasa-gibs.github.io/gibs-api-docs/access-basics/
+TERRA v5 does not claim that the current map is a WRF, ERA5, GraphCast, GenCast or other numerical-model grid.
 
-2. Copernicus Sentinel
+The live forecast values are retrieved from Open-Meteo.
 
-The next major satellite connector should be Copernicus Data Space.
+The location-centred map field is a visualisation prototype around the selected forecast point. It should not be interpreted as a physically simulated spatial field.
 
-The platform provides APIs for catalogue search, satellite imagery, statistical analysis and processing. citehttps://dataspace.copernicus.eu/analyse/apis/sentinel-hub
+This distinction is intentional. The next development stage is to replace the prototype field with genuine gridded Earth-system data.
 
-Sentinel Hub can return processed imagery, metadata, statistics and downloadable products for a specified area and time range. citehttps://documentation.dataspace.copernicus.eu/APIs/SentinelHub/UserGuides/BeginnersGuide.html
+Planned scientific data architecture
 
-3. ERA5
+                    TERRA
+                      |
+              LOCATION + VARIABLE
+                      |
+             +--------+---------+
+             |                  |
+          OBSERVATIONS       REANALYSIS
+             |                  |
+         SATELLITES            ERA5
+             |                  |
+             +--------+---------+
+                      |
+                INITIAL STATE
+                      |
+          +-----------+-----------+
+          |           |           |
+         WRF         AI       OTHER MODELS
+          |           |           |
+          +-----------+-----------+
+                      |
+                FORECAST / ENSEMBLE
+                      |
+        +-------------+-------------+
+        |             |             |
+       MAP         HEATMAP       TIME SERIES
+        |             |             |
+        +-------------+-------------+
+                      |
+                SCIENTIFIC FIGURE
+                      |
+                  PDF / PNG
 
-ERA5 is an important first real gridded Earth-system dataset for atmospheric and climate variables.
+Intended temporal capability
 
-ECMWF describes ERA5 as a global reanalysis extending back to 1940 and combining model information with observations through data assimilation. citehttps://www.ecmwf.int/en/forecasts/datasets/era5-hourly-time-series-data-single-levels-1940-present
+TERRA is being designed to support:
 
-Why ERA5 should be the first scientific variable connector
+hourly forecasts;
 
-TERRA needs a dataset that is:
+24-hour forecasts;
 
-global
+multi-day forecasts;
 
-gridded
+historical periods;
 
-multi-variable
+present conditions;
 
-long-term
+future projections;
 
-spatially consistent
+model comparison;
 
-temporally consistent
+uncertainty and ensemble products.
 
-suitable for analysis
+The exact temporal resolution must always respect the native resolution of the underlying dataset/model. TERRA should not invent higher-frequency scientific information.
 
-available through an established scientific infrastructure
+Planned map products
 
-ERA5 fits this role particularly well for atmospheric and climate variables.
+The scientific visualisation engine is intended to support:
 
-The first real TERRA scientific pipeline can therefore be:
+Filled raster/contour maps
+
+Isobars
+
+Wind vectors
+
+Precipitation fields
+
+Temperature fields
+
+Aerosol/pollution concentration fields
+
+Difference maps
+
+Bias maps
+
+Probability maps
+
+Ensemble spread
+
+Satellite/model comparisons
+
+Observation/model comparisons
+
+Past-present-future heatmaps
+
+Planned Earth data integrations
 
 ERA5
-  |
-  v
-Download/API
-  |
-  v
-NetCDF / Zarr
-  |
-  v
-xarray
-  |
-  v
-TERRA API
-  |
-  +---- Map
-  +---- Time series
-  +---- Heatmap
-  +---- Statistics
-  +---- 3D Earth
-  |
-  v
-Forecast engine
 
-Past → Present → Future
+ERA5 is intended to be the first major scientific reanalysis integration.
 
-This is a central TERRA concept.
+Because ERA5 is not a simple anonymous public browser endpoint for arbitrary data retrieval, the production version should use an appropriate backend/data service rather than placing credentials in this static HTML application.
 
-The timeline should eventually contain three scientifically different states.
+Satellite data
 
-PAST                    PRESENT                    FUTURE
- |                         |                         |
- |                         |                         |
-Observations          Current analysis          Forecast
-Reanalysis            Near-real-time            Projection
-Satellite             observations              Scenario
- |                         |                         |
- +-------------------------+-------------------------+
-                           |
-                           v
-                     TERRA TIMELINE
+Planned integration includes NASA Earth-observation imagery and Copernicus Sentinel products.
 
-Past
+Numerical models
 
-Historical observations, reanalysis and satellite archives.
+Future adapters can support outputs from:
 
-Present
+WRF
 
-Latest available observations and analysis.
+ECMWF products
 
-Future
+AIFS
 
-Forecasts, projections and scenarios.
+other numerical weather prediction systems
 
-Future values should always be visually separated from observations.
+AI weather models
 
-Heatmaps
+Future adapters can support publicly accessible model products where legally and technically possible, including products associated with:
 
-Yes — heatmaps are planned as a core output.
+GraphCast
 
-A TERRA result should eventually support:
+GenCast
 
-                 LONGITUDE
-        10°  20°  30°  40°  50°
-LAT  ┌────────────────────────────┐
- 10° │  12   18   21   17   13   │
-  0° │  15   24   29   22   16   │
--10° │  18   31   35   28   19   │
--20° │  22   37   41   33   21   │
--30° │  19   32   38   30   20   │
-     └────────────────────────────┘
+Pangu-Weather
 
-And the user should be able to choose:
+FourCastNet
 
-Past heatmap
+Aurora
 
-1990 → 2025
+other Earth-system AI models
 
-Present heatmap
+TERRA should act as a common visualisation/comparison layer, not claim to reproduce those models.
 
-Latest available observation
+Scientific figure generator — target
 
-Future heatmap
+The next major module should produce publication-style figures containing:
 
-2026 → selected horizon
+title;
 
-This can become one of TERRA's most important analytical outputs.
+variable;
 
-Future heatmap architecture
+units;
 
-                  TERRA
-                    |
-               VARIABLE
-                    |
-             +------+------+
-             |             |
-            PAST         FUTURE
-             |             |
-          Dataset       Forecast
-             |             |
-             +------+------+
-                    |
-                    v
-              Spatial grid
-                    |
-                    v
-                 HEATMAP
-                    |
-          +---------+---------+
-          |         |         |
-        IMAGE      PNG       PDF
+timestamp;
 
-Export system
+forecast lead time;
 
-TERRA v4 can export the current result panel to:
+latitude/longitude;
+
+geographic boundaries;
+
+colour bar;
+
+contours;
+
+vectors where appropriate;
+
+model/dataset name;
+
+initialization time;
+
+observation/model labels;
+
+uncertainty;
+
+source/provenance;
+
+map projection.
+
+Export targets:
 
 PNG
 
-Useful for:
-
-presentations
-
-reports
-
-quick sharing
-
-figures
-
-web pages
+SVG
 
 PDF
 
-Useful for:
+300/600 DPI scientific figures
 
-scientific reports
+Recommended v6 architecture
 
-project documentation
+TERRA should eventually move from one static HTML file to:
 
-model-result summaries
+terra/
+├── frontend/
+│   ├── index.html
+│   ├── css/
+│   └── js/
+├── backend/
+│   ├── API
+│   ├── data adapters
+│   ├── forecast services
+│   └── figure generator
+├── models/
+│   ├── WRF adapter
+│   ├── ERA5 adapter
+│   └── AI model adapters
+├── data/
+│   └── local/cache configuration
+└── docs/
 
-presentations
+The frontend should never contain API credentials.
 
-archiving
+Running locally
 
-A future PDF report should become much more sophisticated and include:
+Because the application uses external JavaScript libraries and APIs, serve it through a local HTTP server rather than opening the HTML file directly.
 
-TERRA RESULT REPORT
+Python
 
-Location
-Variable
-Date/time
-Dataset
-Spatial resolution
-Temporal resolution
+python -m http.server 8000
 
-────────────────────────
+Then open:
 
-Map
+http://localhost:8000
 
-────────────────────────
+GitHub Pages
 
-Past heatmap
+TERRA v5 can still be deployed as a static GitHub Pages prototype.
 
-────────────────────────
+However, a production scientific system will eventually require a backend for:
 
-Present heatmap
+ERA5 retrieval;
 
-────────────────────────
+large gridded datasets;
 
-Future heatmap
+model execution;
 
-────────────────────────
+caching;
 
-Forecast
+authentication;
 
-────────────────────────
+forecast orchestration;
 
-Uncertainty
+AI inference;
 
-────────────────────────
+scientific figure generation.
 
-Model information
+Scientific integrity principles
 
-────────────────────────
+TERRA follows these principles:
 
-Data provenance
+Never label scripted values as real data.
 
-────────────────────────
+Never label a visual interpolation as a numerical model output.
 
-Validation information
+Always display data provenance.
 
-The long-term TERRA result
+Always display model/dataset name.
 
-The ideal TERRA interface eventually becomes something like:
+Preserve native data resolution.
 
-┌───────────────────────────────────────────────────────┐
-│                     TERRA                             │
-│              PLANETARY EARTH ENGINE                   │
-├───────────────────────────────────────────────────────┤
-│                                                       │
-│       🌍 3D EARTH                                    │
-│                                                       │
-│   Satellite     Atmosphere      Ocean      Biosphere │
-│                                                       │
-├───────────────┬───────────────────────┬───────────────┤
-│ LOCATION      │ VARIABLE              │ TIME          │
-│ South Africa  │ PM2.5                 │ 2026          │
-├───────────────┴───────────────────────┴───────────────┤
-│                                                       │
-│              PAST → PRESENT → FUTURE                  │
-│                                                       │
-├───────────────────────────────────────────────────────┤
-│                                                       │
-│                    HEATMAP                            │
-│                                                       │
-├───────────────────────────┬───────────────────────────┤
-│                           │                           │
-│ Forecast                  │ AI interpretation         │
-│                           │                           │
-├───────────────────────────┴───────────────────────────┤
-│                                                       │
-│       [ EXPORT PNG ]       [ EXPORT PDF ]             │
-└───────────────────────────────────────────────────────┘
+Separate observation, reanalysis, forecast and projection.
 
-TERRA v4 status
+Show uncertainty where available.
 
-Component
+Preserve the difference between prediction and scenario projection.
 
-Status
+Keep model adapters independent.
 
-3D Earth
+Make exported figures traceable to their source data.
 
-✅
+Roadmap
 
-Realistic Earth texture
+v5 — Current
 
-✅
+Real location forecast + scientific dashboard.
 
-Cloud layer
+v6
 
-✅
+Real gridded ERA5 integration and scientific raster/contour maps.
 
-Interactive globe
+v7
 
-✅
+Satellite layers and observation/model comparison.
 
-Geographic map
+v8
 
-✅
+WRF and external numerical-model adapters.
 
-Country selection
+v9
 
-✅
+AI weather-model adapters and ensemble comparison.
 
-Map click selection
+v10
 
-✅
+Past → present → future Earth-system digital twin.
 
-NASA Earth-observation layer
-
-✅
-
-Variable registry
-
-✅
-
-Observe mode
-
-✅
-
-Analyse mode
-
-✅
-
-Forecast interface
-
-✅
-
-Scenario interface
-
-✅
-
-Temporal slider
-
-✅
-
-PNG export
-
-✅
-
-PDF export
-
-✅
-
-Real environmental data values
-
-🔄 Next
-
-Real heatmaps
-
-🔄 Next
-
-ERA5 connector
-
-🔜 Next
-
-Sentinel data connector
-
-🔜
-
-Data assimilation
-
-🔜
-
-Validated forecasting
-
-🔜
-
-AI/ML model integration
-
-🔜
-
-Computational scenario engine
-
-🔜
-
-Important distinction
-
-TERRA is not yet an operational digital twin.
-
-It is currently a rapidly developing research/software prototype.
-
-The roadmap is intentionally:
-
-REAL EARTH VISUALISATION
-          ↓
-REAL EARTH DATA
-          ↓
-REAL ANALYSIS
-          ↓
-REAL HEATMAPS
-          ↓
-REAL MODEL OUTPUTS
-          ↓
-DATA ASSIMILATION
-          ↓
-AI / ML
-          ↓
-FORECASTING
-          ↓
-SCENARIO SIMULATION
-          ↓
-PLANETARY DIGITAL TWIN
-
-This progression is important because it allows each stage to be scientifically tested before TERRA makes stronger claims.
-
-TERRA v5 — immediate next target
-
-The next version should connect ERA5 directly to TERRA.
-
-The first real workflow should be:
-
-User chooses:
-     |
-     +--- Location
-     |
-     +--- Variable
-     |
-     +--- Date range
-     |
-     v
-TERRA API
-     |
-     v
-ERA5
-     |
-     v
-Real gridded data
-     |
-     +--------+---------+
-     |        |         |
-     v        v         v
-   MAP    TIMESERIES  HEATMAP
-     |        |         |
-     +--------+---------+
-              |
-              v
-         3D EARTH
-              |
-              v
-       EXPORT PNG/PDF
-
-After that works, we can add forecasting.
-
-That is the point where TERRA stops being just an impressive interface and starts becoming a genuine data-driven Earth-system software project.
+The long-term objective is not simply an attractive 3D globe. The objective is a transparent system where real observations, reanalysis, numerical models, AI models and forecasts can be visualised and compared on one Earth-system interface.
