@@ -2,368 +2,264 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TERRA v5 — Scientific Earth Forecast Engine</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TERRA v6 — Earth Scientific Forecast Engine</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
- integrity="sha256-p4NxAoJBhIINfQ3jGf1GxG2FfR9fQYf8r4xK5q1wQ0E="
- crossorigin=""/>
-
+ integrity="sha256-p4NxAoJBhIINfQ3jGf1GxG2FfR9fQYf8r4xK5q1wQ0E=" crossorigin="">
 <style>
-:root{
-  --bg:#071018; --panel:#0d1722; --panel2:#111e2b; --line:#233445;
-  --text:#e8f0f7; --muted:#91a4b5; --accent:#42d3ff; --accent2:#8b5cf6;
-  --good:#49d17d; --warn:#f5b942; --danger:#ff6577;
-}
-*{box-sizing:border-box}
-body{margin:0;background:radial-gradient(circle at 20% 0%,#102436 0,#071018 38%,#04090e 100%);
-color:var(--text);font:14px/1.45 Inter,Segoe UI,Arial,sans-serif}
-button,select,input{font:inherit}
-.app{display:grid;grid-template-columns:330px 1fr;min-height:100vh}
-aside{background:rgba(8,16,25,.96);border-right:1px solid var(--line);padding:20px;overflow:auto}
-main{min-width:0}
-.brand{display:flex;gap:12px;align-items:center;margin-bottom:20px}
-.logo{width:42px;height:42px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#70e6ff,#1679bd 55%,#061a2c 58%);box-shadow:0 0 30px #28c9ff55}
-h1{font-size:19px;margin:0}.version{color:var(--accent);font-size:11px;letter-spacing:2px}
-.section{border-top:1px solid var(--line);padding:16px 0}.section:first-of-type{border-top:0}
-label{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.9px;margin:0 0 6px}
-select,input{width:100%;background:#0a141e;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:10px;margin-bottom:12px;outline:none}
-select:focus,input:focus{border-color:var(--accent)}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.btn{width:100%;border:1px solid #2b536a;background:#0d2534;color:#dff8ff;border-radius:9px;padding:11px 12px;cursor:pointer;margin-top:5px}
-.btn:hover{border-color:var(--accent);background:#103246}
-.primary{background:linear-gradient(135deg,#087ca9,#3151a5);border-color:#48cfff;font-weight:700}
-.small{font-size:11px;color:var(--muted)}
-.status{padding:10px;border:1px solid var(--line);border-radius:9px;background:#09131c;margin-top:10px}
-.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warn);margin-right:7px}
-.dot.live{background:var(--good);box-shadow:0 0 10px #49d17d}
-header{height:64px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:#071018cc;backdrop-filter:blur(10px)}
-.header-title{font-size:13px;color:var(--muted)}.header-title strong{color:var(--text)}
-.badge{border:1px solid var(--line);padding:7px 10px;border-radius:999px;color:var(--muted);font-size:11px}
-.dashboard{padding:18px;display:grid;grid-template-columns:minmax(0,1.65fr) minmax(320px,.75fr);gap:16px}
-.card{background:linear-gradient(180deg,#0d1722,#09131c);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 15px 45px #0004}
-.card-head{padding:13px 15px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
-.card-head strong{font-size:13px}.mapwrap{height:520px;position:relative}
-#map{height:100%;width:100%;background:#071018}
-.map-overlay{position:absolute;z-index:500;left:15px;top:15px;background:#071018df;border:1px solid var(--line);border-radius:10px;padding:10px;pointer-events:none}
-.map-overlay .big{font-size:20px;font-weight:800}.map-overlay .unit{color:var(--muted)}
-.legend{position:absolute;z-index:500;right:15px;bottom:15px;width:190px;background:#071018e8;border:1px solid var(--line);border-radius:10px;padding:10px}
-.grad{height:9px;border-radius:5px;background:linear-gradient(90deg,#173bdb,#19b7ff,#4bd66d,#f6dc4a,#f15a32,#bd1f48)}
-.legendrow{display:flex;justify-content:space-between;color:var(--muted);font-size:10px;margin-top:4px}
-.right{display:grid;gap:16px;align-content:start}
-.metricgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px}
-.metric{background:#09131c;border:1px solid var(--line);border-radius:9px;padding:12px}.metric .v{font-size:22px;font-weight:800}.metric .k{color:var(--muted);font-size:10px;text-transform:uppercase}
-canvas{display:block;width:100%;height:220px}
-.chart{padding:10px 14px}
-.timeline{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;padding:12px}.t{border:1px solid var(--line);padding:7px 2px;text-align:center;border-radius:6px;color:var(--muted);font-size:10px}.t.active{border-color:var(--accent);color:var(--accent);background:#0b2633}
-.output-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;padding:12px}
-.footer-note{padding:12px 15px;color:var(--muted);font-size:11px;border-top:1px solid var(--line)}
-table{width:100%;border-collapse:collapse;font-size:11px}th,td{padding:8px;border-bottom:1px solid var(--line);text-align:right}th:first-child,td:first-child{text-align:left}
-.scroll{max-height:280px;overflow:auto}
-#earthCanvas{width:100%;height:280px;background:radial-gradient(circle at 50% 45%,#0c3146,#050b10 68%)}
-.disclaimer{color:#f5b942;font-size:10px;margin-top:8px}
-@media(max-width:1050px){.app{grid-template-columns:1fr}aside{border-right:0;border-bottom:1px solid var(--line)}.dashboard{grid-template-columns:1fr}}
+:root{--bg:#061018;--panel:#0c1721;--panel2:#101f2c;--line:#243746;--text:#eaf3f8;--muted:#91a5b5;--cyan:#39d4ff;--green:#48d18a;--amber:#f1bd4b;--red:#ff6377}
+*{box-sizing:border-box}html,body{margin:0;background:radial-gradient(circle at 20% 0,#112b3d,#061018 45%,#03070b);color:var(--text);font:14px Segoe UI,Arial,sans-serif}
+button,select,input{font:inherit}.app{display:grid;grid-template-columns:330px 1fr;min-height:100vh}
+aside{padding:18px;background:#071019f5;border-right:1px solid var(--line);overflow:auto}.brand{display:flex;gap:12px;align-items:center;margin-bottom:15px}
+.logo{width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a2efff,#1380b7 58%,#041321 60%);box-shadow:0 0 28px #35cfff55}
+h1{font-size:20px;margin:0}.ver{font-size:10px;letter-spacing:2px;color:var(--cyan)}
+.sec{padding:15px 0;border-top:1px solid var(--line)}.sec:first-of-type{border-top:0}
+label{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px}
+select,input{width:100%;background:#09141e;border:1px solid var(--line);color:var(--text);padding:9px;border-radius:7px;margin-bottom:10px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:7px}.btn{width:100%;padding:10px;border:1px solid #315366;background:#0d2534;color:var(--text);border-radius:8px;margin:4px 0;cursor:pointer}
+.btn:hover{border-color:var(--cyan)}.primary{background:linear-gradient(135deg,#087ca8,#304da0);border-color:#45d5ff;font-weight:700}
+.status{margin-top:7px;padding:9px;border:1px solid var(--line);border-radius:8px;color:var(--muted);font-size:11px}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--amber);margin-right:6px}.live{background:var(--green);box-shadow:0 0 8px #48d18a}
+.small{font-size:10px;color:var(--muted)}.checks{display:grid;grid-template-columns:1fr 1fr;gap:4px}.checks button{font-size:10px}
+main{min-width:0}header{height:62px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;padding:0 18px;background:#071018dd;backdrop-filter:blur(10px)}
+.header strong{font-size:13px}.badge{padding:6px 9px;border:1px solid var(--line);border-radius:999px;font-size:10px;color:var(--muted)}
+.grid{padding:16px;display:grid;grid-template-columns:minmax(0,1.7fr) minmax(320px,.75fr);gap:15px}.card{background:linear-gradient(180deg,#0c1721,#09131b);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 14px 40px #0004}
+.head{padding:11px 13px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.head strong{font-size:12px}
+#map{height:535px}.mapbox{position:relative}.overlay{position:absolute;z-index:500;left:13px;top:13px;background:#071018e8;border:1px solid var(--line);border-radius:8px;padding:9px}.big{font-size:20px;font-weight:800}.legend{position:absolute;z-index:500;right:13px;bottom:13px;width:190px;background:#071018e8;border:1px solid var(--line);border-radius:8px;padding:9px}.gradient{height:9px;border-radius:5px;background:linear-gradient(90deg,#1637d4,#15bfff,#45d477,#f3d24a,#f16b31,#b81f4b)}.legendrow{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:3px}
+.tabs{display:flex;gap:5px;padding:9px;border-top:1px solid var(--line)}.tab{padding:7px 9px;border:1px solid var(--line);background:#09141d;color:var(--muted);border-radius:6px;cursor:pointer;font-size:10px}.tab.active{border-color:var(--cyan);color:var(--cyan)}
+.timeline{display:flex;gap:4px;padding:10px;overflow:auto}.t{min-width:62px;padding:6px;text-align:center;border:1px solid var(--line);border-radius:6px;color:var(--muted);font-size:9px;cursor:pointer}.t.active{border-color:var(--cyan);color:var(--cyan);background:#0b2632}
+.chartwrap{padding:8px 12px 12px}.chartwrap canvas{width:100%;height:280px}.right{display:grid;gap:15px;align-content:start}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:10px}.metric{padding:10px;background:#09141d;border:1px solid var(--line);border-radius:7px}.metric b{display:block;font-size:19px}.metric span{font-size:9px;color:var(--muted);text-transform:uppercase}
+.table{max-height:270px;overflow:auto}.table table{width:100%;border-collapse:collapse;font-size:10px}.table th,.table td{padding:7px;border-bottom:1px solid var(--line);text-align:right}.table th:first-child,.table td:first-child{text-align:left}
+.foot{padding:10px 13px;border-top:1px solid var(--line);color:var(--muted);font-size:10px;line-height:1.5}
+.exportgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px}.exportgrid .btn{font-size:10px}
+#earth{width:100%;height:270px;display:block;background:#050b10}
+@media(max-width:1050px){.app{grid-template-columns:1fr}aside{border-right:0;border-bottom:1px solid var(--line)}.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="app">
 <aside>
-  <div class="brand"><div class="logo"></div><div><h1>TERRA</h1><div class="version">v5 • SCIENTIFIC EARTH FORECAST ENGINE</div></div></div>
+<div class="brand"><div class="logo"></div><div><h1>TERRA</h1><div class="ver">v6 • SCIENTIFIC EARTH ENGINE</div></div></div>
 
-  <div class="section">
-    <label>Location</label>
-    <select id="country"></select>
-    <input id="place" placeholder="Search place or click map" value="Potchefstroom">
-    <div class="row">
-      <input id="lat" type="number" step=".001" placeholder="Latitude" value="-26.7167">
-      <input id="lon" type="number" step=".001" placeholder="Longitude" value="27.1000">
-    </div>
-    <button class="btn" id="locateBtn">Use browser location</button>
-  </div>
+<div class="sec">
+<label>Country / region</label><select id="country"></select>
+<label>Place label</label><input id="place" value="Potchefstroom" placeholder="Place name">
+<div class="row"><input id="lat" type="number" step=".0001" value="-26.7167"><input id="lon" type="number" step=".0001" value="27.1000"></div>
+<button class="btn" id="browserLoc">Use my browser location</button>
+</div>
 
-  <div class="section">
-    <label>Variable</label>
-    <select id="variable">
-      <option value="temperature_2m">2 m Temperature</option>
-      <option value="relative_humidity_2m">Relative Humidity</option>
-      <option value="wind_speed_10m">10 m Wind Speed</option>
-      <option value="surface_pressure">Surface Pressure</option>
-      <option value="precipitation">Precipitation</option>
-      <option value="cloud_cover">Cloud Cover</option>
-    </select>
-    <label>Scientific layer</label>
-    <select id="layer">
-      <option>Forecast field</option>
-      <option>Historical reanalysis</option>
-      <option>Observation / satellite</option>
-      <option>Model comparison</option>
-      <option>Difference / bias</option>
-      <option>Uncertainty / probability</option>
-    </select>
-  </div>
+<div class="sec">
+<label>Variable</label>
+<select id="variable">
+<option value="temperature_2m">2 m Temperature (°C)</option>
+<option value="relative_humidity_2m">Relative Humidity (%)</option>
+<option value="wind_speed_10m">10 m Wind Speed (km/h)</option>
+<option value="surface_pressure">Surface Pressure (hPa)</option>
+<option value="precipitation">Precipitation (mm)</option>
+<option value="cloud_cover">Cloud Cover (%)</option>
+</select>
+<label>Map product</label>
+<select id="mapProduct">
+<option value="field">Scientific forecast field</option>
+<option value="anomaly">Relative anomaly field</option>
+<option value="probability">Exceedance-style probability</option>
+</select>
+</div>
 
-  <div class="section">
-    <label>Forecast</label>
-    <select id="resolution">
-      <option value="hourly">Hourly</option>
-      <option value="daily">Daily / 24-hour</option>
-    </select>
-    <div class="row">
-      <div><label>Hours</label><select id="hours"><option>24</option><option>48</option><option>72</option><option>168</option></select></div>
-      <div><label>Timezone</label><select id="timezone"><option value="auto">Local</option><option value="UTC">UTC</option></select></div>
-    </div>
-    <button class="btn primary" id="run">▶ RUN TERRA</button>
-    <div class="status"><span class="dot" id="statusDot"></span><span id="status">Waiting for run</span></div>
-  </div>
+<div class="sec">
+<label>Forecast length</label>
+<select id="hours"><option value="24">24 hours</option><option value="48">48 hours</option><option value="72">72 hours</option><option value="168">7 days</option></select>
+<label>Map grid</label>
+<select id="gridSize"><option value="5">5 × 5</option><option value="7" selected>7 × 7</option><option value="9">9 × 9</option></select>
+<div class="small">The grid uses real forecast API calls at multiple geographic points. It is a live visual field, not a WRF/ERA5 model grid.</div>
+<button class="btn primary" id="run">▶ RUN TERRA</button>
+<div class="status"><span class="dot" id="dot"></span><span id="status">Waiting for run</span></div>
+</div>
 
-  <div class="section">
-    <label>Scientific output</label>
-    <button class="btn" id="png">Export map/dashboard PNG</button>
-    <button class="btn" id="pdf">Export scientific PDF</button>
-    <div class="disclaimer">Prototype note: live forecast values come from Open-Meteo. ERA5 is a reanalysis product and is not the same thing as a forecast model.</div>
-  </div>
+<div class="sec">
+<label>Academic downloads</label>
+<div class="checks">
+<button class="btn" id="csv">CSV data</button><button class="btn" id="graphPng">Graph PNG</button>
+<button class="btn" id="graphSvg">Graph SVG</button><button class="btn" id="graphPdf">Graph PDF</button>
+<button class="btn" id="mapPng">Heatmap PNG</button><button class="btn" id="mapPdf">Heatmap PDF</button>
+</div>
+<button class="btn primary" id="reportPdf">Complete academic PDF</button>
+</div>
+<div class="foot">Scientific integrity: TERRA distinguishes live forecast data from reanalysis, observations, projections and numerical-model output. No scripted value is presented as a real model result.</div>
 </aside>
 
 <main id="report">
-<header>
-  <div class="header-title"><strong id="title">TERRA • 24-HOUR FORECAST</strong> <span id="subtitle">Potchefstroom, South Africa</span></div>
-  <div class="badge" id="dataBadge">LIVE DATA • Open-Meteo</div>
-</header>
+<header><div><strong id="title">TERRA • 24-HOUR FORECAST</strong> <span id="sub">Potchefstroom, South Africa</span></div><div class="badge" id="badge">LIVE FORECAST</div></header>
+<div class="grid">
+<div>
+<div class="card">
+<div class="head"><strong>SCIENTIFIC HEATMAP / SPATIAL FIELD</strong><span class="small" id="mapStamp">—</span></div>
+<div class="mapbox"><div id="map"></div><div class="overlay"><div class="big" id="mapVal">—</div><div class="small" id="mapMeta">Select a time step</div></div><div class="legend"><div class="small">VALUE SCALE</div><div class="gradient"></div><div class="legendrow"><span id="minL">—</span><span id="maxL">—</span></div></div></div>
+<div class="timeline" id="timeline"></div>
+<div class="tabs"><button class="tab active" id="forecastTab">FORECAST</button><button class="tab" id="pastTab">PAST / REANALYSIS</button><button class="tab" id="compareTab">MODEL COMPARISON</button></div>
+<div class="foot" id="mapNote">The current live field is constructed from real forecast values retrieved at multiple points around the selected location. A production ERA5/WRF/AI adapter will replace this with native gridded fields.</div>
+</div>
 
-<div class="dashboard">
-  <div>
-    <div class="card">
-      <div class="card-head"><strong>SCIENTIFIC SPATIAL VIEW</strong><span class="small" id="mapTime">Initialising…</span></div>
-      <div class="mapwrap">
-        <div id="map"></div>
-        <div class="map-overlay"><div class="big" id="mapValue">—</div><div class="unit" id="mapUnit">Waiting</div></div>
-        <div class="legend"><div class="small">FIELD SCALE</div><div class="grad"></div><div class="legendrow"><span id="legMin">Low</span><span id="legMax">High</span></div></div>
-      </div>
-      <div class="timeline" id="timeline"></div>
-      <div class="footer-note">Map is a TERRA scientific visualisation surface. The first live implementation uses a location-centred forecast field assembled from real forecast API values; it is not a WRF/ERA5 gridded forecast.</div>
-    </div>
+<div class="card" style="margin-top:15px">
+<div class="head"><strong>ACADEMIC TIME-SERIES GRAPH</strong><span class="small" id="chartTitle">Hourly forecast</span></div>
+<div class="chartwrap"><canvas id="chart" width="1200" height="330"></canvas></div>
+<div class="foot">Publication-style chart: labelled axes, units, gridlines, forecast period and source metadata. Export as PNG, SVG or PDF.</div>
+</div>
 
-    <div class="card" style="margin-top:16px">
-      <div class="card-head"><strong>FORECAST TRAJECTORY</strong><span class="small" id="chartUnit">—</span></div>
-      <div class="chart"><canvas id="chart" width="1000" height="240"></canvas></div>
-    </div>
+<div class="card" style="margin-top:15px">
+<div class="head"><strong>DAILY SUMMARY</strong><span class="small">Derived from hourly forecast</span></div>
+<div class="table"><table><thead><tr><th>Date</th><th>Min</th><th>Mean</th><th>Max</th><th>Total</th></tr></thead><tbody id="daily"></tbody></table></div>
+</div>
+</div>
 
-    <div class="card" style="margin-top:16px">
-      <div class="card-head"><strong>24-HOUR / DAILY PRODUCT</strong><span class="small">Hourly source → daily aggregation</span></div>
-      <div class="scroll"><table><thead><tr><th>Period</th><th>Min</th><th>Mean</th><th>Max</th><th>Total</th></tr></thead><tbody id="tableBody"></tbody></table></div>
-    </div>
-  </div>
+<div class="right">
+<div class="card"><div class="head"><strong>3D EARTH</strong><span class="small">planetary context</span></div><canvas id="earth" width="700" height="380"></canvas><div class="foot">Interactive planetary context. Satellite textures, terrain and atmospheric layers are reserved for the real Earth-observation integration stage.</div></div>
 
-  <div class="right">
-    <div class="card">
-      <div class="card-head"><strong>3D EARTH</strong><span class="small">Interactive planetary context</span></div>
-      <canvas id="earthCanvas" width="700" height="400"></canvas>
-      <div class="footer-note">The globe is an interactive scientific context view. A future module can replace the procedural sphere with tiled satellite imagery and WebGL terrain.</div>
-    </div>
+<div class="card"><div class="head"><strong>FORECAST METRICS</strong></div><div class="metrics">
+<div class="metric"><span>Location</span><b id="mLoc">—</b></div><div class="metric"><span>Current</span><b id="mCurrent">—</b></div>
+<div class="metric"><span>24 h mean</span><b id="mMean">—</b></div><div class="metric"><span>24 h range</span><b id="mRange">—</b></div>
+</div></div>
 
-    <div class="card">
-      <div class="card-head"><strong>MODEL / DATA STATE</strong><span class="small">provenance</span></div>
-      <div class="metricgrid">
-        <div class="metric"><div class="k">Location</div><div class="v" id="mLocation">—</div></div>
-        <div class="metric"><div class="k">Current</div><div class="v" id="mCurrent">—</div></div>
-        <div class="metric"><div class="k">24 h mean</div><div class="v" id="mMean">—</div></div>
-        <div class="metric"><div class="k">24 h range</div><div class="v" id="mRange">—</div></div>
-      </div>
-      <div class="footer-note" id="provenance">No run yet.</div>
-    </div>
-
-    <div class="card">
-      <div class="card-head"><strong>SCIENTIFIC INTERPRETATION</strong></div>
-      <div class="footer-note" id="interpretation">Run TERRA to generate a data-driven summary. This text is an interpretation of the retrieved data, not an AI-generated scientific conclusion.</div>
-    </div>
-
-    <div class="card">
-      <div class="card-head"><strong>EXPORT</strong></div>
-      <div class="output-actions"><button class="btn" id="png2">PNG</button><button class="btn" id="pdf2">PDF</button><button class="btn" id="copy">Copy summary</button></div>
-    </div>
-  </div>
+<div class="card"><div class="head"><strong>DATA PROVENANCE</strong></div><div class="foot" id="prov">No run yet.</div></div>
+<div class="card"><div class="head"><strong>SCIENTIFIC SUMMARY</strong></div><div class="foot" id="summary">Run TERRA to retrieve real forecast data and build the spatial field.</div></div>
+<div class="card"><div class="head"><strong>EXPORT CENTRE</strong></div><div class="exportgrid">
+<button class="btn" id="csv2">CSV</button><button class="btn" id="graphPng2">Graph PNG</button>
+<button class="btn" id="graphSvg2">Graph SVG</button><button class="btn" id="graphPdf2">Graph PDF</button>
+<button class="btn" id="mapPng2">Map PNG</button><button class="btn" id="mapPdf2">Map PDF</button>
+</div></div>
+</div>
 </div>
 </main>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
- integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
- crossorigin=""></script>
+ integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
 <script>
-const countries = {
-"South Africa":[-30.56,22.94],"Namibia":[-22.96,18.49],"Botswana":[-22.33,24.68],
-"Zimbabwe":[-19.02,29.15],"Mozambique":[-18.67,35.53],"Zambia":[-13.13,27.85],
-"Angola":[-11.20,17.87],"Lesotho":[-29.61,28.23],"Eswatini":[-26.52,31.47],
-"Kenya":[0.02,37.91],"Tanzania":[-6.37,34.89],"Nigeria":[9.08,8.68],
-"United Kingdom":[55.38,-3.44],"France":[46.23,2.21],"Germany":[51.17,10.45],
-"United States":[37.09,-95.71],"Canada":[56.13,-106.35],"Brazil":[-14.24,-51.93],
-"India":[20.59,78.96],"China":[35.86,104.20],"Australia":[-25.27,133.78],
-"Japan":[36.20,138.25],"New Zealand":[-40.90,174.89]
+const countries={
+"South Africa":[-30.56,22.94],"Namibia":[-22.96,18.49],"Botswana":[-22.33,24.68],"Zimbabwe":[-19.02,29.15],
+"Mozambique":[-18.67,35.53],"Zambia":[-13.13,27.85],"Angola":[-11.20,17.87],"Lesotho":[-29.61,28.23],
+"Eswatini":[-26.52,31.47],"Kenya":[0.02,37.91],"Tanzania":[-6.37,34.89],"Nigeria":[9.08,8.68],
+"United Kingdom":[55.38,-3.44],"France":[46.23,2.21],"Germany":[51.17,10.45],"United States":[37.09,-95.71],
+"Canada":[56.13,-106.35],"Brazil":[-14.24,-51.93],"India":[20.59,78.96],"China":[35.86,104.20],
+"Australia":[-25.27,133.78],"Japan":[36.20,138.25],"New Zealand":[-40.90,174.89]
 };
-const countryEl=document.getElementById("country");
-Object.keys(countries).forEach(c=>countryEl.add(new Option(c,c)));
-countryEl.value="South Africa";
-
-const variableMeta={
-temperature_2m:{label:"2 m Temperature",unit:"°C",api:"temperature_2m",convert:v=>v,fmt:v=>v.toFixed(1)},
-relative_humidity_2m:{label:"Relative Humidity",unit:"%",api:"relative_humidity_2m",convert:v=>v,fmt:v=>v.toFixed(0)},
-wind_speed_10m:{label:"10 m Wind Speed",unit:"km/h",api:"wind_speed_10m",convert:v=>v,fmt:v=>v.toFixed(1)},
-surface_pressure:{label:"Surface Pressure",unit:"hPa",api:"surface_pressure",convert:v=>v/100,fmt:v=>v.toFixed(1)},
-precipitation:{label:"Precipitation",unit:"mm",api:"precipitation",convert:v=>v,fmt:v=>v.toFixed(1)},
-cloud_cover:{label:"Cloud Cover",unit:"%",api:"cloud_cover",convert:v=>v,fmt:v=>v.toFixed(0)}
+const meta={
+temperature_2m:{api:"temperature_2m",unit:"°C",label:"2 m Temperature",conv:v=>v,fmt:v=>v.toFixed(1)},
+relative_humidity_2m:{api:"relative_humidity_2m",unit:"%",label:"Relative Humidity",conv:v=>v,fmt:v=>v.toFixed(0)},
+wind_speed_10m:{api:"wind_speed_10m",unit:"km/h",label:"10 m Wind Speed",conv:v=>v,fmt:v=>v.toFixed(1)},
+surface_pressure:{api:"surface_pressure",unit:"hPa",label:"Surface Pressure",conv:v=>v/100,fmt:v=>v.toFixed(1)},
+precipitation:{api:"precipitation",unit:"mm",label:"Precipitation",conv:v=>v,fmt:v=>v.toFixed(1)},
+cloud_cover:{api:"cloud_cover",unit:"%",label:"Cloud Cover",conv:v=>v,fmt:v=>v.toFixed(0)}
 };
-let map, marker, data=[], gridLayer, globeFrame=0;
+let map,marker,fieldLayer,selectedIndex=0,series=[],fieldData=[],earthT=0;
 
+const country=document.getElementById("country");
+Object.keys(countries).forEach(x=>country.add(new Option(x,x)));country.value="South Africa";
+
+function setLoc(lat,lon){document.getElementById("lat").value=lat.toFixed(4);document.getElementById("lon").value=lon.toFixed(4);if(marker)marker.setLatLng([lat,lon]);if(map)map.setView([lat,lon],6)}
 function initMap(){
- map=L.map("map",{worldCopyJump:true}).setView([-26.7167,27.1],5);
+ map=L.map("map").setView([-26.7167,27.1],5);
  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:"© OpenStreetMap contributors"}).addTo(map);
- marker=L.marker([-26.7167,27.1]).addTo(map).bindPopup("TERRA selected location").openPopup();
- map.on("click",e=>setLocation(e.latlng.lat,e.latlng.lng,true));
+ marker=L.marker([-26.7167,27.1]).addTo(map);
+ map.on("click",e=>setLoc(e.latlng.lat,e.latlng.lng));
 }
-function setLocation(lat,lon,fromMap=false){
- document.getElementById("lat").value=lat.toFixed(4);
- document.getElementById("lon").value=lon.toFixed(4);
- if(marker) marker.setLatLng([lat,lon]);
- if(map && !fromMap) map.setView([lat,lon],6);
-}
-countryEl.addEventListener("change",()=>{
- const [lat,lon]=countries[countryEl.value]; setLocation(lat,lon); document.getElementById("place").value=countryEl.value;
-});
-document.getElementById("locateBtn").onclick=()=>{
- if(!navigator.geolocation){alert("Browser geolocation is unavailable.");return}
- navigator.geolocation.getCurrentPosition(p=>setLocation(p.coords.latitude,p.coords.longitude),()=>alert("Location permission was not granted."));
-};
+country.onchange=()=>{let p=countries[country.value];setLoc(p[0],p[1]);document.getElementById("place").value=country.value};
+document.getElementById("browserLoc").onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>setLoc(p.coords.latitude,p.coords.longitude),()=>alert("Location permission denied.")):alert("Geolocation unavailable.");
 
-function buildURL(lat,lon,vars,hours){
- const tz=document.getElementById("timezone").value==="UTC"?"UTC":"auto";
- return `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${vars.join(",")}&forecast_days=7&timezone=${tz}`;
+function status(s,live=false){document.getElementById("status").textContent=s;document.getElementById("dot").className="dot"+(live?" live":"")}
+function gridPoints(lat,lon,n){
+ const pts=[],span=.9,mid=(n-1)/2;
+ for(let y=0;y<n;y++)for(let x=0;x<n;x++)pts.push({lat:lat+(y-mid)*span/2,lon:lon+(x-mid)*span/2});
+ return pts;
+}
+async function getPoint(p,hours,variable){
+ const url=`https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lon}&hourly=${variable}&forecast_days=7&timezone=auto`;
+ const r=await fetch(url);if(!r.ok)throw new Error("Forecast request failed");
+ const j=await r.json();return {lat:p.lat,lon:p.lon,time:j.hourly.time.slice(0,hours),values:j.hourly[variable].slice(0,hours)};
 }
 async function run(){
- const lat=+document.getElementById("lat").value, lon=+document.getElementById("lon").value;
- const meta=variableMeta[document.getElementById("variable").value];
- const hrs=+document.getElementById("hours").value;
- setStatus("Fetching live forecast…",false);
+ const lat=+document.getElementById("lat").value,lon=+document.getElementById("lon").value;
+ const v=document.getElementById("variable").value,m=meta[v],hours=+document.getElementById("hours").value,n=+document.getElementById("gridSize").value;
+ status(`Retrieving ${n*n} real forecast locations…`);
  try{
-   const url=buildURL(lat,lon,[meta.api],hrs);
-   const res=await fetch(url); if(!res.ok) throw new Error("Forecast service returned "+res.status);
-   const json=await res.json();
-   const times=json.hourly.time.slice(0,hrs), vals=json.hourly[meta.api].slice(0,hrs).map(meta.convert);
-   data=times.map((t,i)=>({time:t,value:vals[i]})).filter(d=>d.value!==null);
-   render(json,meta,lat,lon);
-   setStatus("LIVE DATA • forecast loaded",true);
- }catch(e){
-   console.error(e); setStatus("Data request failed — check internet connection",false);
-   document.getElementById("interpretation").textContent=e.message;
- }
+  const points=gridPoints(lat,lon,n),chunks=[];
+  for(let i=0;i<points.length;i+=8)chunks.push(Promise.all(points.slice(i,i+8).map(p=>getPoint(p,hours,m.api))));
+  const groups=await Promise.all(chunks);fieldData=groups.flat();
+  const center=fieldData.reduce((best,p)=>Math.abs(p.lat-lat)+Math.abs(p.lon-lon)<Math.abs(best.lat-lat)+Math.abs(best.lon-lon)?p:best,fieldData[0]);
+  series=center.time.map((t,i)=>({time:t,value:m.conv(center.values[i])})).filter(x=>x.value!==null);
+  selectedIndex=0;render(m,lat,lon);status("LIVE FORECAST • spatial field ready",true);
+ }catch(e){console.error(e);status("Data retrieval failed");document.getElementById("summary").textContent=e.message}
 }
-function setStatus(text,live){document.getElementById("status").textContent=text;document.getElementById("statusDot").className="dot"+(live?" live":"");}
+function render(m,lat,lon){
+ const place=document.getElementById("place").value||country.value;
+ document.getElementById("title").textContent=`TERRA • ${document.getElementById("hours").value}-HOUR ${m.label.toUpperCase()}`;
+ document.getElementById("sub").textContent=`${place} • ${lat.toFixed(3)}, ${lon.toFixed(3)}`;
+ document.getElementById("mLoc").textContent=place;
+ const a=series.slice(0,24).map(x=>x.value),mn=Math.min(...a),mx=Math.max(...a),mean=a.reduce((x,y)=>x+y,0)/a.length;
+ document.getElementById("mCurrent").textContent=m.fmt(series[0].value)+" "+m.unit;
+ document.getElementById("mMean").textContent=m.fmt(mean)+" "+m.unit;
+ document.getElementById("mRange").textContent=`${m.fmt(mn)}–${m.fmt(mx)}`;
+ document.getElementById("prov").innerHTML=`<b>Live source:</b> Open-Meteo forecast API<br><b>Variable:</b> ${m.label}<br><b>Location:</b> ${lat.toFixed(4)}, ${lon.toFixed(4)}<br><b>Spatial sample:</b> ${fieldData.length} forecast points<br><b>Temporal sample:</b> ${series.length} hourly steps<br><b>Native source type:</b> numerical weather forecast service<br><b>Not:</b> ERA5 reanalysis, WRF output or an AI-model prediction.`;
+ document.getElementById("summary").textContent=`The ${m.label.toLowerCase()} forecast at ${place} ranges from ${m.fmt(mn)} to ${m.fmt(mx)} ${m.unit} during the first 24 hours, with a mean of ${m.fmt(mean)} ${m.unit}. The spatial heatmap uses real forecast values sampled at multiple nearby locations.`;
+ document.getElementById("minL").textContent=m.fmt(Math.min(...fieldData.map(p=>m.conv(p.values[selectedIndex]??0))));
+ document.getElementById("maxL").textContent=m.fmt(Math.max(...fieldData.map(p=>m.conv(p.values[selectedIndex]??0))));
+ document.getElementById("mapStamp").textContent=series[selectedIndex].time.replace("T"," ");
+ document.getElementById("mapVal").textContent=m.fmt(series[selectedIndex].value)+" "+m.unit;
+ document.getElementById("mapMeta").textContent=`${m.label} • forecast hour ${selectedIndex}`;
+ drawField(m,lat,lon);drawChart(m);timeline();daily(m);
+}
+function color(t){t=Math.max(0,Math.min(1,t));let h=240-240*t;return `hsl(${h},85%,52%)`}
+function drawField(m,lat,lon){
+ if(fieldLayer)map.removeLayer(fieldLayer);fieldLayer=L.layerGroup();
+ const vals=fieldData.map(p=>m.conv(p.values[selectedIndex]??0)),mn=Math.min(...vals),mx=Math.max(...vals);
+ fieldData.forEach((p,i)=>L.circle([p.lat,p.lon],{radius:32000,stroke:false,fillColor:color((vals[i]-mn)/(mx-mn||1)),fillOpacity:.46}).addTo(fieldLayer));
+ fieldLayer.addTo(map);marker.setLatLng([lat,lon]).bindPopup(`<b>${document.getElementById("place").value}</b><br>${m.fmt(series[selectedIndex].value)} ${m.unit}`).openPopup();map.setView([lat,lon],6);
+}
+function timeline(){const el=document.getElementById("timeline");el.innerHTML="";series.slice(0,24).forEach((d,i)=>{let b=document.createElement("div");b.className="t"+(i===selectedIndex?" active":"");b.textContent=d.time.slice(11,16);b.onclick=()=>{selectedIndex=i;let m=meta[document.getElementById("variable").value];render(m,+lat.value,+lon.value)};el.appendChild(b)})}
+function drawChart(m){
+ const c=document.getElementById("chart"),ctx=c.getContext("2d"),w=c.width,h=c.height,p={l:65,r:25,t:25,b:45},vals=series.map(x=>x.value),mn=Math.min(...vals),mx=Math.max(...vals);
+ ctx.clearRect(0,0,w,h);ctx.font="12px Segoe UI";ctx.fillStyle="#91a5b5";ctx.strokeStyle="#243746";ctx.lineWidth=1;
+ for(let i=0;i<=5;i++){let y=p.t+(h-p.t-p.b)*i/5;ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.fillText(m.fmt(mx-(mx-mn)*i/5),8,y+4)}
+ ctx.strokeStyle="#39d4ff";ctx.lineWidth=3;ctx.beginPath();vals.forEach((v,i)=>{let x=p.l+(w-p.l-p.r)*i/(vals.length-1||1),y=h-p.b-(v-mn)/(mx-mn||1)*(h-p.t-p.b);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();
+ ctx.fillStyle="#eaf3f8";ctx.font="bold 14px Segoe UI";ctx.fillText(`${m.label} forecast`,p.l,p.t-6);
+ ctx.fillStyle="#91a5b5";ctx.font="11px Segoe UI";ctx.fillText(`Forecast lead time (hours)`,w/2-55,h-12);ctx.save();ctx.translate(16,h/2+25);ctx.rotate(-Math.PI/2);ctx.fillText(`${m.label} (${m.unit})`,0,0);ctx.restore();
+ for(let i=0;i<vals.length;i+=Math.max(1,Math.floor(vals.length/8))){let x=p.l+(w-p.l-p.r)*i/(vals.length-1||1);ctx.fillText(String(i),x-6,h-25)}
+}
+function daily(m){
+ const groups={};series.forEach(x=>{let d=x.time.slice(0,10);(groups[d]??=[]).push(x.value)});
+ const body=document.getElementById("daily");body.innerHTML="";
+ Object.entries(groups).forEach(([d,a])=>{let tr=document.createElement("tr"),mi=Math.min(...a),ma=Math.max(...a),av=a.reduce((x,y)=>x+y,0)/a.length,total=m.api==="precipitation"?a.reduce((x,y)=>x+y,0):null;tr.innerHTML=`<td>${d}</td><td>${m.fmt(mi)}</td><td>${m.fmt(av)}</td><td>${m.fmt(ma)}</td><td>${total===null?"—":m.fmt(total)}</td>`;body.appendChild(tr)})
+}
+function download(name,blob){let a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function csv(){
+ const m=meta[variable.value],rows=[["timestamp","value","unit","variable","latitude","longitude"],...series.map(x=>[x.time,x.value,m.unit,m.label,lat.value,lon.value])];
+ download("TERRA_timeseries.csv",new Blob([rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")).join("\\n")],{type:"text/csv"}))
+}
+function graphSVG(){
+ const m=meta[variable.value],W=1200,H=650,p={l:100,r:55,t:90,b:90},vals=series.map(x=>x.value),mn=Math.min(...vals),mx=Math.max(...vals);
+ const pts=vals.map((v,i)=>`${p.l+(W-p.l-p.r)*i/(vals.length-1||1)},${H-p.b-(v-mn)/(mx-mn||1)*(H-p.t-p.b)}`).join(" ");
+ let grid="";for(let i=0;i<=5;i++){let y=p.t+(H-p.t-p.b)*i/5;grid+=`<line x1="${p.l}" x2="${W-p.r}" y1="${y}" y2="${y}" stroke="#d9e1e7" stroke-width="1"/><text x="20" y="${y+5}" font-size="13" fill="#52606d">${m.fmt(mx-(mx-mn)*i/5)}</text>`}
+ const title=`TERRA — ${m.label} forecast`;let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="100%" height="100%" fill="white"/>${grid}<text x="${p.l}" y="38" font-family="Arial" font-size="22" font-weight="bold">${title}</text><text x="${p.l}" y="62" font-family="Arial" font-size="13" fill="#52606d">${place.value} • ${lat.value}, ${lon.value} • Open-Meteo live forecast</text><polyline points="${pts}" fill="none" stroke="#1677a8" stroke-width="3"/><line x1="${p.l}" x2="${p.l}" y1="${p.t}" y2="${H-p.b}" stroke="#222"/><line x1="${p.l}" x2="${W-p.r}" y1="${H-p.b}" y2="${H-p.b}" stroke="#222"/><text x="${W/2-65}" y="${H-30}" font-family="Arial" font-size="13">Forecast lead time (hours)</text><text x="22" y="${H/2}" transform="rotate(-90 22 ${H/2})" font-family="Arial" font-size="13">${m.label} (${m.unit})</text></svg>`;
+ download("TERRA_academic_timeseries.svg",new Blob([svg],{type:"image/svg+xml"}))
+}
+async function graphPNG(){const c=await html2canvas(document.querySelector(".chartwrap"),{backgroundColor:"#fff",scale:3});download("TERRA_academic_timeseries.png",await fetch(c.toDataURL("image/png")).then(r=>r.blob()))}
+async function graphPDF(){const c=await html2canvas(document.querySelector(".chartwrap"),{backgroundColor:"#fff",scale:2}),{jsPDF}=window.jspdf,pdf=new jsPDF("landscape","mm","a4"),pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight(),r=Math.min(pw/c.width,ph/c.height);pdf.addImage(c.toDataURL("image/png"),"PNG",0,0,c.width*r,c.height*r);pdf.save("TERRA_academic_timeseries.pdf")}
+async function mapPNG(){const c=await html2canvas(document.querySelector(".mapbox"),{backgroundColor:"#fff",scale:2});download("TERRA_scientific_heatmap.png",await fetch(c.toDataURL("image/png")).then(r=>r.blob()))}
+async function mapPDF(){const c=await html2canvas(document.querySelector(".mapbox"),{backgroundColor:"#fff",scale:2}),{jsPDF}=window.jspdf,pdf=new jsPDF("landscape","mm","a4"),pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight(),r=Math.min(pw/c.width,ph/c.height);pdf.addImage(c.toDataURL("image/png"),"PNG",0,0,c.width*r,c.height*r);pdf.save("TERRA_scientific_heatmap.pdf")}
+async function reportPDF(){const c=await html2canvas(document.getElementById("report"),{backgroundColor:"#071018",scale:1.3}),{jsPDF}=window.jspdf,pdf=new jsPDF("landscape","mm","a4"),pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight(),r=Math.min(pw/c.width,ph/c.height);pdf.addImage(c.toDataURL("image/png"),"PNG",0,0,c.width*r,c.height*r);pdf.save("TERRA_complete_scientific_report.pdf")}
+function bind(id,fn){document.getElementById(id).onclick=fn}
+bind("run",run);bind("csv",csv);bind("csv2",csv);bind("graphPng",graphPNG);bind("graphPng2",graphPNG);bind("graphSvg",graphSVG);bind("graphSvg2",graphSVG);bind("graphPdf",graphPDF);bind("graphPdf2",graphPDF);bind("mapPng",mapPNG);bind("mapPng2",mapPNG);bind("mapPdf",mapPDF);bind("mapPdf2",mapPDF);bind("reportPdf",reportPDF);
 
-function render(json,meta,lat,lon){
- const place=document.getElementById("place").value || countryEl.value;
- document.getElementById("title").textContent=`TERRA • ${document.getElementById("resolution").value==="hourly"?"HOURLY":"24-HOUR / DAILY"} FORECAST`;
- document.getElementById("subtitle").textContent=`${place} • ${lat.toFixed(3)}, ${lon.toFixed(3)}`;
- document.getElementById("dataBadge").textContent="LIVE DATA • Open-Meteo";
- document.getElementById("mapTime").textContent=data[0].time.replace("T"," ")+" → "+data[Math.min(23,data.length-1)].time.replace("T"," ");
- document.getElementById("mapValue").textContent=meta.fmt(data[0].value)+" "+meta.unit;
- document.getElementById("mapUnit").textContent=meta.label;
- document.getElementById("chartUnit").textContent=meta.unit;
- const mn=Math.min(...data.map(d=>d.value)),mx=Math.max(...data.map(d=>d.value));
- document.getElementById("legMin").textContent=meta.fmt(mn);document.getElementById("legMax").textContent=meta.fmt(mx);
- document.getElementById("mLocation").textContent=place;
- document.getElementById("mCurrent").textContent=meta.fmt(data[0].value)+" "+meta.unit;
- const mean=data.slice(0,24).reduce((a,d)=>a+d.value,0)/Math.min(24,data.length);
- document.getElementById("mMean").textContent=meta.fmt(mean)+" "+meta.unit;
- document.getElementById("mRange").textContent=meta.fmt(mn)+"–"+meta.fmt(mx);
- document.getElementById("provenance").innerHTML=`<b>Source:</b> Open-Meteo forecast API<br><b>Coordinates:</b> ${lat.toFixed(4)}, ${lon.toFixed(4)}<br><b>Variable:</b> ${meta.label}<br><b>Forecast:</b> ${data.length} hourly steps<br><b>Important:</b> This is live forecast data, not an ERA5 reanalysis field or a WRF/AI model output.`;
- document.getElementById("interpretation").textContent=interpret(meta,mean,mn,mx);
- drawChart(meta);
- buildTimeline();
- buildTable(meta);
- addScientificField(lat,lon,meta,data[0].value);
+function globe(){
+ const c=document.getElementById("earth"),ctx=c.getContext("2d"),w=c.width,h=c.height,r=Math.min(w,h)*.35,cx=w/2,cy=h/2;
+ ctx.clearRect(0,0,w,h);let g=ctx.createRadialGradient(cx-r*.35,cy-r*.35,5,cx,cy,r);g.addColorStop(0,"#43bfe9");g.addColorStop(.55,"#12658b");g.addColorStop(1,"#031421");
+ ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.clip();
+ ctx.strokeStyle="#8be8ff55";for(let i=-3;i<=3;i++){ctx.beginPath();ctx.ellipse(cx,cy,r,r*(.07+Math.abs(i)*.12),0,0,Math.PI*2);ctx.stroke()}for(let i=-2;i<=2;i++){ctx.beginPath();ctx.ellipse(cx,cy,r*(.2+Math.abs(i)*.2),r,0,0,Math.PI*2);ctx.stroke()}
+ ctx.fillStyle="#60dba455";for(let i=0;i<28;i++){let a=i*2.4+earthT*.003,rr=r*(.25+.5*((Math.sin(i*6.3)+1)/2));ctx.beginPath();ctx.ellipse(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr*.68,18,7,a,0,Math.PI*2);ctx.fill()}ctx.restore();ctx.strokeStyle="#39d4ff88";ctx.stroke();earthT++;requestAnimationFrame(globe)
 }
-
-function interpret(meta,mean,mn,mx){
- if(meta.api==="temperature_2m") return `The retrieved forecast ranges from ${meta.fmt(mn)} to ${meta.fmt(mx)} °C. The 24-hour mean is ${meta.fmt(mean)} °C. TERRA is reporting the numerical forecast values; no causal attribution or extreme-event claim is made.`;
- if(meta.api==="precipitation") return `Forecast precipitation is represented in millimetres for each hourly step. The map marker and trajectory show the selected location; spatial interpolation is visual context rather than a true gridded precipitation model.`;
- return `The retrieved ${meta.label.toLowerCase()} values range from ${meta.fmt(mn)} to ${meta.fmt(mx)} ${meta.unit}. The 24-hour mean is ${meta.fmt(mean)} ${meta.unit}.`;
-}
-
-function addScientificField(lat,lon,meta,center){
- if(gridLayer) map.removeLayer(gridLayer);
- // Location-centred visual field: values are scaled around the real selected forecast value.
- // It is intentionally labelled as a visualisation surface, not a numerical model grid.
- const pts=[];
- const span=.9;
- for(let y=-2;y<=2;y++) for(let x=-2;x<=2;x++){
-   const d=Math.sqrt(x*x+y*y), v=center*(1-0.025*d)+(center===0?0:(Math.sin((x+lat)*1.7)+Math.cos((y+lon)*1.3))*0.02*Math.abs(center));
-   pts.push([lat+y*span/2,lon+x*span/2,v]);
- }
- gridLayer=L.layerGroup();
- pts.forEach(p=>L.circle([p[0],p[1]],{radius:35000,stroke:false,fillColor:valueColor(p[2],Math.min(...pts.map(q=>q[2])),Math.max(...pts.map(q=>q[2]))),fillOpacity:.32}).addTo(gridLayer));
- gridLayer.addTo(map);
- map.setView([lat,lon],6);
- marker.setLatLng([lat,lon]).bindPopup(`<b>${document.getElementById("place").value}</b><br>${meta.fmt(center)} ${meta.unit}`);
-}
-function valueColor(v,min,max){
- const t=Math.max(0,Math.min(1,(v-min)/(max-min||1)));
- const h=240-240*t; return `hsl(${h},85%,52%)`;
-}
-function buildTimeline(){
- const el=document.getElementById("timeline");el.innerHTML="";
- data.slice(0,24).filter((_,i)=>i%3===0).forEach((d,i)=>{
-   const x=document.createElement("div");x.className="t"+(i===0?" active":"");x.textContent=d.time.slice(11,16);el.appendChild(x);
- });
-}
-function drawChart(meta){
- const c=document.getElementById("chart"),ctx=c.getContext("2d"),w=c.width,h=c.height;
- ctx.clearRect(0,0,w,h);ctx.font="12px Segoe UI";ctx.strokeStyle="#233445";ctx.fillStyle="#91a4b5";
- const vals=data.slice(0,48).map(d=>d.value),min=Math.min(...vals),max=Math.max(...vals),pad=35;
- for(let i=0;i<5;i++){const y=pad+(h-2*pad)*i/4;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(w-pad,y);ctx.stroke();ctx.fillText(meta.fmt(max-(max-min)*i/4),4,y+4)}
- ctx.strokeStyle="#42d3ff";ctx.lineWidth=3;ctx.beginPath();
- vals.forEach((v,i)=>{const x=pad+(w-2*pad)*i/(vals.length-1||1),y=h-pad-(v-min)/(max-min||1)*(h-2*pad);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});
- ctx.stroke();ctx.lineWidth=1;ctx.fillStyle="#91a4b5";ctx.fillText("Forecast lead time",w/2-45,h-7);
-}
-function buildTable(meta){
- const body=document.getElementById("tableBody");body.innerHTML="";
- const days={};
- data.forEach(d=>{const day=d.time.slice(0,10);(days[day]??=[]).push(d.value)});
- Object.entries(days).slice(0,7).forEach(([day,a])=>{
-   const min=Math.min(...a),max=Math.max(...a),mean=a.reduce((x,y)=>x+y,0)/a.length,total=meta.api==="precipitation"?a.reduce((x,y)=>x+y,0):null;
-   const tr=document.createElement("tr");tr.innerHTML=`<td>${day}</td><td>${meta.fmt(min)}</td><td>${meta.fmt(mean)}</td><td>${meta.fmt(max)}</td><td>${total===null?"—":meta.fmt(total)}</td>`;body.appendChild(tr);
- });
-}
-async function exportPNG(){
- const canvas=await html2canvas(document.getElementById("report"),{backgroundColor:"#071018",scale:2});
- const a=document.createElement("a");a.download="TERRA_scientific_forecast.png";a.href=canvas.toDataURL("image/png");a.click();
-}
-async function exportPDF(){
- const canvas=await html2canvas(document.getElementById("report"),{backgroundColor:"#071018",scale:1.5});
- const img=canvas.toDataURL("image/png"),{jsPDF}=window.jspdf;
- const pdf=new jsPDF("l","mm","a4"),pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight(),ratio=Math.min(pw/canvas.width,ph/canvas.height);
- pdf.addImage(img,"PNG",0,0,canvas.width*ratio,canvas.height*ratio);
- pdf.save("TERRA_scientific_forecast.pdf");
-}
-document.getElementById("run").onclick=run;document.getElementById("png").onclick=exportPNG;document.getElementById("png2").onclick=exportPNG;document.getElementById("pdf").onclick=exportPDF;document.getElementById("pdf2").onclick=exportPDF;
-document.getElementById("copy").onclick=async()=>{const s=document.getElementById("provenance").innerText+"\\n"+document.getElementById("interpretation").innerText;await navigator.clipboard.writeText(s);alert("Summary copied.");};
-
-function drawGlobe(){
- const c=document.getElementById("earthCanvas"),ctx=c.getContext("2d"),w=c.width,h=c.height;
- ctx.clearRect(0,0,w,h);const r=Math.min(w,h)*.34,cx=w/2,cy=h/2;
- const g=ctx.createRadialGradient(cx-r*.35,cy-r*.35,r*.05,cx,cy,r);g.addColorStop(0,"#2b9bd1");g.addColorStop(.6,"#12628b");g.addColorStop(1,"#031421");
- ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
- ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.clip();
- ctx.strokeStyle="#75d8ef55";ctx.lineWidth=1;
- for(let i=-3;i<=3;i++){ctx.beginPath();ctx.ellipse(cx,cy,r,r*(Math.abs(i)/3*.18+.05),0,0,Math.PI*2);ctx.stroke()}
- for(let i=-2;i<=2;i++){ctx.beginPath();ctx.ellipse(cx,cy,r*(Math.abs(i)/2*.65+.15),r,0,0,Math.PI*2);ctx.stroke()}
- ctx.fillStyle="#65d9a855";for(let i=0;i<22;i++){let a=i*2.7+globeFrame*.002,rr=r*(.2+.55*((Math.sin(i*8.1)+1)/2));let x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr*.7;ctx.beginPath();ctx.ellipse(x,y,18,7,a,0,Math.PI*2);ctx.fill()}
- ctx.restore();
- ctx.strokeStyle="#42d3ff99";ctx.stroke();
- globeFrame++;requestAnimationFrame(drawGlobe);
-}
-initMap();drawGlobe();run();
+initMap();globe();run();
 </script>
 </body>
 </html>
