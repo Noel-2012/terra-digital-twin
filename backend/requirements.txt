@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+python-multipart
+numpy
+pandas
+xarray
+netcdf4
+scipy
+scikit-learn
+matplotlib
+cartopy
+minisom
