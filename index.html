@@ -3,3764 +3,637 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>TERRA — Earth-System Digital Twin</title>
-
-<meta name="description"
-      content="TERRA is an experimental interface for an Earth-system digital twin combining observations, physics, AI and interactive 3D visualization.">
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
-      rel="stylesheet">
+<meta name="theme-color" content="#06111f">
+<meta name="description" content="TERRA v3 — Interactive Planetary Digital Twin prototype with 3D Earth, universal variables, forecasting and scenario exploration.">
+<title>TERRA v3 — Planetary Digital Twin</title>
 
 <style>
-
 :root{
-
-    --bg:#030711;
-    --bg2:#07101e;
-
-    --panel:rgba(8,16,29,.82);
-    --panel-solid:#0a1424;
-
-    --line:rgba(126,164,210,.18);
-    --line-bright:rgba(126,164,210,.35);
-
-    --text:#eaf2ff;
-    --muted:#7f91aa;
-
-    --cyan:#63d9ff;
-    --blue:#4d8dff;
-    --purple:#a78bfa;
-    --green:#5ee6a8;
-    --orange:#ffb86b;
-    --red:#ff6b7a;
-
-    --mono:"DM Mono",monospace;
-    --display:"Space Grotesk",sans-serif;
-    --body:"Inter",sans-serif;
-
+  --bg:#030812; --panel:rgba(6,15,29,.84); --panel2:rgba(10,24,43,.72);
+  --line:rgba(126,174,220,.20); --text:#e8f2ff; --muted:#8ea6c1;
+  --cyan:#54d7ff; --blue:#3d7cff; --green:#52e0a5; --amber:#ffc857;
+  --danger:#ff6b7a; --shadow:0 18px 60px rgba(0,0,0,.34);
+  --radius:18px;
 }
-
-*{
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
-}
-
-html{
-    scroll-behavior:smooth;
-}
-
-body{
-
-    background:
-        radial-gradient(circle at 50% 20%,
-        rgba(42,90,150,.12),
-        transparent 35%),
-        var(--bg);
-
-    color:var(--text);
-
-    font-family:var(--body);
-
-    overflow-x:hidden;
-}
-
-button,
-input{
-    font:inherit;
-}
-
-button{
-    cursor:pointer;
-}
-
-a{
-    color:inherit;
-    text-decoration:none;
-}
-
-/* =========================================================
-   GLOBAL BACKGROUND
-========================================================= */
-
-.space-background{
-
-    position:fixed;
-    inset:0;
-
-    pointer-events:none;
-
-    background:
-
-        radial-gradient(circle at 20% 30%,
-        rgba(98,160,255,.07) 0 1px,
-        transparent 2px),
-
-        radial-gradient(circle at 70% 60%,
-        rgba(255,255,255,.05) 0 1px,
-        transparent 2px),
-
-        radial-gradient(circle at 40% 80%,
-        rgba(167,139,250,.06) 0 1px,
-        transparent 2px);
-
-    background-size:
-        130px 130px,
-        190px 190px,
-        240px 240px;
-
-    opacity:.7;
-}
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+#app{position:relative;width:100%;height:100%}
+#scene{position:absolute;inset:0}
+canvas{display:block}
+.vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 48%,transparent 32%,rgba(0,0,0,.24) 72%,rgba(0,0,0,.62) 100%)}
 .topbar{
-
-    position:fixed;
-
-    top:0;
-    left:0;
-    right:0;
-
-    height:68px;
-
-    z-index:100;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:space-between;
-
-    padding:
-        0 clamp(18px,4vw,48px);
-
-    background:
-        linear-gradient(
-            180deg,
-            rgba(3,7,17,.96),
-            rgba(3,7,17,.65)
-        );
-
-    backdrop-filter:blur(18px);
-
-    border-bottom:1px solid var(--line);
-}
-
-.brand{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:13px;
-
-    font-family:var(--display);
-
-    font-weight:700;
-
-    letter-spacing:.04em;
-}
-
-.brand-mark{
-
-    width:28px;
-    height:28px;
-
-    border:1px solid var(--cyan);
-
-    border-radius:50%;
-
-    position:relative;
-
-    box-shadow:
-        0 0 22px rgba(99,217,255,.18);
-}
-
-.brand-mark::before{
-
-    content:"";
-
-    position:absolute;
-
-    width:38px;
-    height:10px;
-
-    border:1px solid var(--cyan);
-
-    border-radius:50%;
-
-    left:50%;
-    top:50%;
-
-    transform:
-        translate(-50%,-50%)
-        rotate(-18deg);
-
-    opacity:.7;
-}
-
-.brand small{
-
-    display:block;
-
-    color:var(--muted);
-
-    font-family:var(--mono);
-
-    font-size:9px;
-
-    letter-spacing:.14em;
-
-    margin-top:2px;
-}
-
-.system-status{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:16px;
-
-    font-family:var(--mono);
-
-    font-size:10px;
-
-    color:var(--muted);
-}
-
-.status-dot{
-
-    width:7px;
-    height:7px;
-
-    border-radius:50%;
-
-    background:var(--green);
-
-    box-shadow:
-        0 0 12px rgba(94,230,168,.8);
-
-    animation:
-        statusPulse 2s infinite;
-}
-
-@keyframes statusPulse{
-
-    0%,100%{
-        opacity:1;
-    }
-
-    50%{
-        opacity:.35;
-    }
-
-}
-
-/* =========================================================
-   MAIN 3D STAGE
-========================================================= */
-
-.hero{
-
-    position:relative;
-
-    height:100vh;
-
-    min-height:720px;
-
-    overflow:hidden;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-}
-
-#earth-stage{
-
-    position:absolute;
-
-    inset:0;
-
-    z-index:1;
-}
-
-.hero-overlay{
-
-    position:absolute;
-
-    inset:0;
-
-    z-index:5;
-
-    pointer-events:none;
-}
-
-/* vignette */
-
-.hero-overlay::after{
-
-    content:"";
-
-    position:absolute;
-
-    inset:0;
-
-    background:
-
-        radial-gradient(
-            circle at center,
-            transparent 35%,
-            rgba(3,7,17,.18) 58%,
-            rgba(3,7,17,.82) 100%
-        );
-
-}
-
-/* =========================================================
-   HERO COPY
-========================================================= */
-
-.hero-copy{
-
-    position:absolute;
-
-    z-index:10;
-
-    left:clamp(20px,5vw,70px);
-
-    bottom:clamp(42px,8vh,100px);
-
-    width:min(540px,80vw);
-
-    pointer-events:auto;
-}
-
-.eyebrow{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:9px;
-
-    color:var(--cyan);
-
-    font-family:var(--mono);
-
-    font-size:10px;
-
-    letter-spacing:.16em;
-
-    text-transform:uppercase;
-
-    margin-bottom:18px;
-}
-
-.eyebrow span{
-
-    width:6px;
-    height:6px;
-
-    background:var(--cyan);
-
-    border-radius:50%;
-
-    box-shadow:
-        0 0 12px var(--cyan);
-}
-
-.hero-copy h1{
-
-    font-family:var(--display);
-
-    font-size:
-        clamp(40px,6vw,76px);
-
-    line-height:.96;
-
-    letter-spacing:-.045em;
-
-    margin-bottom:20px;
-}
-
-.hero-copy h1 em{
-
-    color:var(--cyan);
-
-    font-style:normal;
-}
-
-.hero-copy p{
-
-    max-width:52ch;
-
-    color:var(--muted);
-
-    font-size:15px;
-
-    line-height:1.7;
-
-    margin-bottom:25px;
-}
-
-.hero-actions{
-
-    display:flex;
-
-    flex-wrap:wrap;
-
-    gap:10px;
-}
-
-.btn{
-
-    border:1px solid var(--line-bright);
-
-    background:rgba(7,15,27,.72);
-
-    color:var(--text);
-
-    padding:12px 17px;
-
-    border-radius:4px;
-
-    font-family:var(--mono);
-
-    font-size:11px;
-
-    transition:.2s ease;
-
-    backdrop-filter:blur(10px);
-}
-
-.btn:hover{
-
-    border-color:var(--cyan);
-
-    box-shadow:
-        0 0 20px rgba(99,217,255,.08);
-
-    transform:translateY(-1px);
-}
-
-.btn.primary{
-
-    background:var(--cyan);
-
-    color:#03101a;
-
-    border-color:var(--cyan);
-
-    font-weight:500;
-}
-
-/* =========================================================
-   EARTH HUD
-========================================================= */
-
-.hud{
-
-    position:absolute;
-
-    z-index:12;
-
-    pointer-events:none;
-}
-
-.hud-panel{
-
-    background:rgba(5,12,23,.68);
-
-    border:1px solid var(--line);
-
-    backdrop-filter:blur(14px);
-
-    box-shadow:
-        0 15px 50px rgba(0,0,0,.28);
-
-}
-
-.hud-title{
-
-    font-family:var(--mono);
-
-    color:var(--muted);
-
-    font-size:9px;
-
-    letter-spacing:.12em;
-
-    text-transform:uppercase;
-
-    margin-bottom:12px;
-}
-
-/* left */
-
-.hud-left{
-
-    left:24px;
-
-    top:100px;
-
-    width:190px;
-
-    padding:15px;
-}
-
-.metric{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    padding:8px 0;
-
-    border-bottom:1px solid var(--line);
-
-    font-family:var(--mono);
-
-    font-size:10px;
-}
-
-.metric:last-child{
-    border-bottom:none;
-}
-
-.metric span:first-child{
-    color:var(--muted);
-}
-
-.metric strong{
-    font-weight:500;
-}
-
-/* right */
-
-.hud-right{
-
-    right:24px;
-
-    top:100px;
-
-    width:220px;
-
-    padding:15px;
-}
-
-.layer-control{
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:space-between;
-
-    gap:10px;
-
-    padding:8px 0;
-
-    font-family:var(--mono);
-
-    font-size:10px;
-
-    border-bottom:1px solid var(--line);
-
-    color:var(--muted);
-}
-
-.layer-control:last-child{
-    border-bottom:none;
-}
-
-.layer-control input{
-    accent-color:var(--cyan);
-}
-
-/* =========================================================
-   EARTH INTERACTION HINT
-========================================================= */
-
-.earth-hint{
-
-    position:absolute;
-
-    z-index:11;
-
-    right:50%;
-
-    bottom:28px;
-
-    transform:translateX(50%);
-
-    font-family:var(--mono);
-
-    font-size:9px;
-
-    color:var(--muted);
-
-    letter-spacing:.1em;
-
-    pointer-events:none;
-
-    opacity:.7;
-}
-
-/* =========================================================
-   SYSTEM SECTIONS
-========================================================= */
-
-section{
-
-    position:relative;
-
-    padding:
-        110px
-        clamp(20px,5vw,70px);
-
-    border-top:1px solid var(--line);
-
-    background:
-        linear-gradient(
-            180deg,
-            rgba(5,11,21,.75),
-            rgba(3,7,17,.92)
-        );
-}
-
-.section-header{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:flex-end;
-
-    gap:30px;
-
-    margin-bottom:45px;
-
-    flex-wrap:wrap;
-}
-
-.section-tag{
-
-    font-family:var(--mono);
-
-    font-size:10px;
-
-    letter-spacing:.15em;
-
-    color:var(--cyan);
-
-    margin-bottom:12px;
-
-    text-transform:uppercase;
-}
-
-.section-header h2{
-
-    font-family:var(--display);
-
-    font-size:
-        clamp(28px,4vw,48px);
-
-    letter-spacing:-.035em;
-
-    max-width:18ch;
-
-    line-height:1;
-}
-
-.section-header p{
-
-    max-width:48ch;
-
-    color:var(--muted);
-
-    font-size:14px;
-
-    line-height:1.7;
-}
-
-/* =========================================================
-   EARTH SYSTEM GRID
-========================================================= */
-
-.system-grid{
-
-    display:grid;
-
-    grid-template-columns:
-        repeat(4,minmax(0,1fr));
-
-    border:1px solid var(--line);
-}
-
-.system-card{
-
-    min-height:220px;
-
-    padding:24px;
-
-    border-right:1px solid var(--line);
-
-    border-bottom:1px solid var(--line);
-
-    position:relative;
-
-    overflow:hidden;
-
-    transition:.25s ease;
-}
-
-.system-card:hover{
-
-    background:
-        rgba(99,217,255,.025);
-
-    border-color:
-        rgba(99,217,255,.28);
-}
-
-.system-number{
-
-    font-family:var(--mono);
-
-    color:var(--muted);
-
-    font-size:9px;
-
-    letter-spacing:.12em;
-}
-
-.system-icon{
-
-    width:38px;
-    height:38px;
-
-    margin:
-        35px 0 18px;
-
-    border:1px solid var(--line-bright);
-
-    border-radius:50%;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    color:var(--cyan);
-
-    font-size:15px;
-}
-
-.system-card h3{
-
-    font-family:var(--display);
-
-    font-size:18px;
-
-    margin-bottom:8px;
-}
-
-.system-card p{
-
-    color:var(--muted);
-
-    font-size:12px;
-
-    line-height:1.65;
-}
-
-.system-state{
-
-    position:absolute;
-
-    top:24px;
-
-    right:24px;
-
-    font-family:var(--mono);
-
-    font-size:8px;
-
-    color:var(--green);
-}
-
-/* =========================================================
-   SCENARIO ENGINE
-========================================================= */
-
-.scenario{
-
-    display:grid;
-
-    grid-template-columns:
-        minmax(300px, .8fr)
-        minmax(400px, 1.2fr);
-
-    border:1px solid var(--line);
-
-    background:var(--panel);
-}
-
-.scenario-input{
-
-    padding:30px;
-
-    border-right:1px solid var(--line);
-}
-
-.console-label{
-
-    font-family:var(--mono);
-
-    font-size:9px;
-
-    color:var(--muted);
-
-    letter-spacing:.13em;
-
-    text-transform:uppercase;
-
-    margin-bottom:13px;
-}
-
-.scenario-chips{
-
-    display:flex;
-
-    flex-wrap:wrap;
-
-    gap:7px;
-
-    margin-bottom:25px;
-}
-
-.chip{
-
-    border:1px solid var(--line);
-
-    background:transparent;
-
-    color:var(--muted);
-
-    padding:7px 9px;
-
-    border-radius:3px;
-
-    font-family:var(--mono);
-
-    font-size:9px;
-
-    transition:.2s;
-}
-
-.chip:hover,
-.chip.active{
-
-    color:var(--text);
-
-    border-color:var(--cyan);
-
-    background:
-        rgba(99,217,255,.05);
-}
-
-.scenario-input input{
-
-    width:100%;
-
-    background:#030914;
-
-    border:1px solid var(--line);
-
-    color:var(--text);
-
-    padding:13px;
-
-    border-radius:3px;
-
-    outline:none;
-
-    font-family:var(--mono);
-
-    font-size:11px;
-
-    margin-bottom:12px;
-}
-
-.scenario-input input:focus{
-
-    border-color:var(--cyan);
-}
-
-.simulate{
-
-    width:100%;
-}
-
-/* output */
-
-.scenario-output{
-
-    padding:30px;
-
-    min-height:340px;
-
-    font-family:var(--mono);
-
-    font-size:11px;
-}
-
-.output-top{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    color:var(--muted);
-
-    font-size:9px;
-
-    letter-spacing:.08em;
-
-    margin-bottom:22px;
-}
-
-.trace{
-
-    display:grid;
-
-    gap:11px;
-}
-
-.trace-row{
-
-    display:grid;
-
-    grid-template-columns:110px 1fr;
-
-    gap:15px;
-
-    padding-bottom:11px;
-
-    border-bottom:1px solid var(--line);
-
-    opacity:0;
-
-    transform:translateY(5px);
-
-    animation:
-        traceIn .35s forwards;
-}
-
-@keyframes traceIn{
-
-    to{
-        opacity:1;
-        transform:translateY(0);
-    }
-
-}
-
-.trace-key{
-
-    color:var(--cyan);
-}
-
-.trace-value{
-
-    color:var(--text);
-}
-
-.confidence{
-
-    margin-top:25px;
-
-    padding:14px;
-
-    border:1px solid var(--line);
-
-    background:
-        rgba(99,217,255,.025);
-}
-
-.confidence-head{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    margin-bottom:8px;
-
-    font-size:9px;
-
-    color:var(--muted);
-}
-
-.confidence-bar{
-
-    height:4px;
-
-    background:#182235;
-
-    overflow:hidden;
-}
-
-.confidence-fill{
-
-    width:78%;
-
-    height:100%;
-
-    background:var(--cyan);
-
-    box-shadow:
-        0 0 12px rgba(99,217,255,.5);
-}
-
-/* =========================================================
-   MODEL COMPARISON
-========================================================= */
-
-.comparison{
-
-    display:grid;
-
-    grid-template-columns:
-        repeat(4,1fr);
-
-    border:1px solid var(--line);
-}
-
-.model{
-
-    padding:25px;
-
-    border-right:1px solid var(--line);
-}
-
-.model:last-child{
-    border-right:none;
-}
-
-.model-name{
-
-    font-family:var(--mono);
-
-    font-size:9px;
-
-    color:var(--muted);
-
-    margin-bottom:20px;
-
-    text-transform:uppercase;
-
-    letter-spacing:.1em;
-}
-
-.model-value{
-
-    font-family:var(--display);
-
-    font-size:32px;
-
-    margin-bottom:5px;
-}
-
-.model-unit{
-
-    font-family:var(--mono);
-
-    color:var(--muted);
-
-    font-size:9px;
-}
-
-.model-bar{
-
-    height:3px;
-
-    background:#172135;
-
-    margin-top:20px;
-}
-
-.model-bar span{
-
-    display:block;
-
-    height:100%;
-
-    background:var(--cyan);
-}
-
-/* =========================================================
-   AI PANEL
-========================================================= */
-
-.ai-grid{
-
-    display:grid;
-
-    grid-template-columns:
-        1fr 1fr;
-
-    border:1px solid var(--line);
-}
-
-.ai-panel{
-
-    padding:32px;
-
-    border-right:1px solid var(--line);
-}
-
-.ai-panel:last-child{
-    border-right:none;
-}
-
-.ai-badge{
-
-    display:inline-flex;
-
-    align-items:center;
-
-    gap:7px;
-
-    padding:6px 9px;
-
-    border:1px solid rgba(167,139,250,.3);
-
-    color:var(--purple);
-
-    font-family:var(--mono);
-
-    font-size:8px;
-
-    letter-spacing:.1em;
-
-    margin-bottom:20px;
-}
-
-.ai-panel h3{
-
-    font-family:var(--display);
-
-    font-size:25px;
-
-    margin-bottom:13px;
-}
-
-.ai-panel p{
-
-    color:var(--muted);
-
-    font-size:13px;
-
-    line-height:1.7;
-}
-
-.evidence{
-
-    margin-top:24px;
-}
-
-.evidence-item{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    padding:11px 0;
-
-    border-bottom:1px solid var(--line);
-
-    font-family:var(--mono);
-
-    font-size:9px;
-}
-
-.evidence-item span:first-child{
-    color:var(--muted);
-}
-
-.evidence-score{
-    color:var(--green);
-}
-
-/* =========================================================
-   TIME CONTROL
-========================================================= */
-
+ position:absolute;top:16px;left:18px;right:18px;z-index:10;display:flex;align-items:center;
+ justify-content:space-between;padding:12px 16px;border:1px solid var(--line);border-radius:16px;
+ background:rgba(3,10,20,.72);backdrop-filter:blur(18px);box-shadow:var(--shadow)
+}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(84,215,255,.55);
+background:radial-gradient(circle at 35% 30%,#7de8ff,#1b5f9e 48%,#06142a 75%);box-shadow:0 0 28px rgba(84,215,255,.25)}
+.brand h1{font-size:16px;letter-spacing:.16em;margin:0}
+.brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:.12em;margin-top:2px}
+.status{display:flex;align-items:center;gap:9px;color:#a8c0d8;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 14px var(--green)}
+.panel{
+ position:absolute;z-index:9;border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(20px);
+ box-shadow:var(--shadow);border-radius:var(--radius)
+}
+.left{left:18px;top:92px;width:330px;bottom:18px;overflow:auto;padding:18px}
+.right{right:18px;top:92px;width:350px;bottom:18px;overflow:auto;padding:18px}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:#23405e;border-radius:8px}
+.section{padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid rgba(126,174,220,.12)}
+.section:last-child{border-bottom:0}
+.eyebrow{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);font-weight:700;margin-bottom:8px}
+h2{font-size:16px;margin:0 0 5px} h3{font-size:12px;margin:0 0 8px}
+p{font-size:11px;line-height:1.55;color:var(--muted);margin:6px 0}
+label{display:block;font-size:10px;color:#9db3ca;text-transform:uppercase;letter-spacing:.09em;margin:10px 0 6px}
+select,input{
+ width:100%;padding:10px 11px;border-radius:10px;border:1px solid var(--line);
+ background:#081526;color:var(--text);outline:none
+}
+select:focus,input:focus{border-color:rgba(84,215,255,.65);box-shadow:0 0 0 3px rgba(84,215,255,.08)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modegrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.mode{
+ padding:10px 8px;border:1px solid var(--line);border-radius:10px;background:#071322;color:#b9cce0;
+ text-align:left;font-size:11px;transition:.2s
+}
+.mode:hover{border-color:rgba(84,215,255,.45);transform:translateY(-1px)}
+.mode.active{border-color:var(--cyan);background:rgba(84,215,255,.10);color:#fff;box-shadow:0 0 20px rgba(84,215,255,.08)}
+.run{
+ width:100%;padding:13px 15px;border:0;border-radius:11px;background:linear-gradient(135deg,#43d9ff,#356cf6);
+ color:#fff;font-weight:800;letter-spacing:.09em;text-transform:uppercase;box-shadow:0 10px 30px rgba(53,108,246,.25)
+}
+.run:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.secondary{
+ width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:#071322;color:#bdd0e3;margin-top:7px
+}
+.searchrow{display:flex;gap:7px}.searchrow input{flex:1}.searchrow button{width:44px;border:1px solid var(--line);background:#071322;color:var(--cyan);border-radius:10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{font-size:9px;padding:5px 7px;border-radius:999px;background:#0b1c31;color:#9db8d1;border:1px solid rgba(126,174,220,.12)}
+.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{padding:10px;border-radius:11px;background:rgba(8,21,38,.72);border:1px solid rgba(126,174,220,.12)}
+.stat span{display:block;font-size:9px;color:#7893ad;text-transform:uppercase;letter-spacing:.08em}
+.stat strong{display:block;margin-top:4px;font-size:15px}
+.forecast{height:150px;margin-top:10px;border:1px solid rgba(126,174,220,.12);border-radius:12px;background:#06101d;overflow:hidden}
+.forecast svg{width:100%;height:100%}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:7px;font-size:9px;color:#809ab4}
+.legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:4px;border-radius:2px}
+.trace{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;line-height:1.65;color:#9eb6cf;background:#050d17;padding:10px;border-radius:10px;border:1px solid rgba(126,174,220,.1)}
+.trace b{color:#d9efff}.good{color:var(--green)}.warn{color:var(--amber)}
+.progress{height:5px;background:#0a1a2b;border-radius:99px;overflow:hidden;margin-top:7px}.progress i{display:block;height:100%;background:linear-gradient(90deg,#43d9ff,#4ee2a5);width:78%}
 .timeline{
-
-    border:1px solid var(--line);
-
-    padding:24px;
-
-    background:var(--panel);
+ position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:8;width:min(620px,52vw);
+ padding:12px 15px;border:1px solid var(--line);background:rgba(3,10,20,.78);backdrop-filter:blur(18px);border-radius:16px
 }
-
-.timeline-top{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    font-family:var(--mono);
-
-    font-size:9px;
-
-    color:var(--muted);
-
-    margin-bottom:15px;
+.timehead{display:flex;justify-content:space-between;font-size:10px;color:#90a8c1;text-transform:uppercase;letter-spacing:.08em}
+.timehead strong{color:#e9f6ff}
+input[type=range]{padding:0;height:4px;accent-color:var(--cyan);margin-top:10px}
+.badge{
+ position:absolute;left:50%;top:84px;transform:translateX(-50%);z-index:8;padding:7px 11px;border:1px solid rgba(84,215,255,.25);
+border-radius:999px;background:rgba(3,12,22,.68);font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:#8fb2cc;backdrop-filter:blur(12px)
 }
-
-.timeline input{
-
-    width:100%;
-
-    accent-color:var(--cyan);
+.location-pin{
+ position:absolute;z-index:7;pointer-events:none;display:none;transform:translate(-50%,-50%);
+ width:13px;height:13px;border-radius:50%;border:2px solid #fff;background:#54d7ff;box-shadow:0 0 0 7px rgba(84,215,255,.15),0 0 25px rgba(84,215,255,.9)
 }
-
-/* =========================================================
-   FOOTER
-========================================================= */
-
-footer{
-
-    padding:
-        50px
-        clamp(20px,5vw,70px);
-
-    border-top:1px solid var(--line);
-
-    display:flex;
-
-    justify-content:space-between;
-
-    gap:25px;
-
-    flex-wrap:wrap;
-
-    color:var(--muted);
-
-    font-family:var(--mono);
-
-    font-size:9px;
-
-    line-height:1.7;
+.notice{font-size:9px;line-height:1.45;color:#7892ab;padding:8px;background:#071322;border-radius:9px;border:1px solid rgba(126,174,220,.1)}
+.footer{position:absolute;right:20px;bottom:19px;z-index:7;color:#526b84;font-size:8px;letter-spacing:.09em;text-transform:uppercase}
+@media(max-width:1050px){.left{width:290px}.right{width:300px}.timeline{width:42vw}}
+@media(max-width:800px){
+ .topbar{left:8px;right:8px;top:8px}.left,.right{top:auto;bottom:8px;width:calc(50% - 12px);max-height:46vh;padding:12px}
+ .left{left:8px}.right{right:8px}.timeline{bottom:calc(46vh + 18px);width:70vw}.badge{top:65px}.footer{display:none}
 }
-
-footer strong{
-    color:var(--text);
+@media(max-width:600px){
+ .left,.right{position:absolute;top:auto;bottom:8px;width:calc(100% - 16px);max-height:36vh}
+ .left{left:8px;bottom:calc(36vh + 16px)}.right{left:8px;right:auto}
+ .timeline{width:calc(100% - 32px);bottom:calc(36vh + 16px)}
+ .status{display:none}
 }
-
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media(max-width:1000px){
-
-    .system-grid{
-
-        grid-template-columns:
-            repeat(2,1fr);
-    }
-
-    .comparison{
-
-        grid-template-columns:
-            repeat(2,1fr);
-    }
-
-    .model:nth-child(2){
-        border-right:none;
-    }
-
-    .scenario{
-
-        grid-template-columns:1fr;
-    }
-
-    .scenario-input{
-
-        border-right:none;
-
-        border-bottom:1px solid var(--line);
-    }
-
-}
-
-@media(max-width:720px){
-
-    .system-status .status-text{
-        display:none;
-    }
-
-    .hud-left,
-    .hud-right{
-
-        top:auto;
-
-        bottom:95px;
-
-        width:160px;
-
-        padding:10px;
-
-        font-size:8px;
-    }
-
-    .hud-left{
-        left:12px;
-    }
-
-    .hud-right{
-        right:12px;
-    }
-
-    .hero-copy{
-
-        bottom:30px;
-
-        width:90%;
-    }
-
-    .hero-copy h1{
-
-        font-size:42px;
-    }
-
-    .system-grid,
-    .comparison,
-    .ai-grid{
-
-        grid-template-columns:1fr;
-    }
-
-    .system-card,
-    .model,
-    .ai-panel{
-
-        border-right:none;
-    }
-
-    .model{
-
-        border-bottom:1px solid var(--line);
-    }
-
-    .ai-panel{
-
-        border-bottom:1px solid var(--line);
-    }
-
-    .earth-hint{
-        display:none;
-    }
-
-}
-
-/* =========================================================
-   ACCESSIBILITY
-========================================================= */
-
-@media(prefers-reduced-motion:reduce){
-
-    *,
-    *::before,
-    *::after{
-
-        animation-duration:.001ms !important;
-
-        animation-iteration-count:1 !important;
-
-        transition-duration:.001ms !important;
-    }
-
-}
-
 </style>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+  }
+}
+</script>
 </head>
 
 <body>
+<div id="app">
+  <div id="scene"></div>
+  <div class="vignette"></div>
 
-<div class="space-background"></div>
-
-<!-- =====================================================
-     NAVIGATION
-===================================================== -->
-
-<nav class="topbar">
-
+  <header class="topbar">
     <div class="brand">
+      <div class="logo">✦</div>
+      <div><h1>TERRA</h1><small>PLANETARY DIGITAL TWIN · v3</small></div>
+    </div>
+    <div class="status"><span class="dot"></span> Prototype engine online</div>
+  </header>
 
-        <div class="brand-mark"></div>
+  <div class="badge" id="sceneBadge">EARTH STATE · GLOBAL</div>
+  <div class="location-pin" id="locationPin"></div>
 
-        <div>
-
-            TERRA
-
-            <small>
-                EARTH-SYSTEM DIGITAL TWIN
-            </small>
-
-        </div>
-
+  <aside class="panel left">
+    <div class="section">
+      <div class="eyebrow">01 · Where</div>
+      <h2>Earth location</h2>
+      <p>Choose a country, region or a global Earth view. The 3D globe will focus on your selection.</p>
+      <label for="location">Location</label>
+      <select id="location">
+        <option value="global">🌍 Global Earth</option>
+        <option value="za">🇿🇦 South Africa</option>
+        <option value="na">🇳🇦 Namibia</option>
+        <option value="bw">🇧🇼 Botswana</option>
+        <option value="zm">🇿🇲 Zambia</option>
+        <option value="zw">🇿🇼 Zimbabwe</option>
+        <option value="ke">🇰🇪 Kenya</option>
+        <option value="ng">🇳🇬 Nigeria</option>
+        <option value="de">🇩🇪 Germany</option>
+        <option value="us">🇺🇸 United States</option>
+        <option value="br">🇧🇷 Brazil</option>
+        <option value="in">🇮🇳 India</option>
+        <option value="au">🇦🇺 Australia</option>
+      </select>
+      <label for="locationSearch">Or search</label>
+      <div class="searchrow"><input id="locationSearch" placeholder="e.g. Johannesburg, Amazon..."><button id="searchBtn">⌕</button></div>
+      <div class="chips"><span class="chip">Country</span><span class="chip">Region</span><span class="chip">City</span><span class="chip">Custom polygon*</span></div>
     </div>
 
-    <div class="system-status">
-
-        <span class="status-dot"></span>
-
-        <span class="status-text">
-            OBSERVING · ASSIMILATING · SIMULATING
-        </span>
-
-        <span id="utc">
-            UTC --
-        </span>
-
+    <div class="section">
+      <div class="eyebrow">02 · What</div>
+      <h2>Earth variable</h2>
+      <label for="domain">Domain</label>
+      <select id="domain">
+        <option value="atmosphere">Atmosphere</option>
+        <option value="air">Air quality & chemistry</option>
+        <option value="climate">Climate & extremes</option>
+        <option value="ocean">Ocean</option>
+        <option value="land">Land</option>
+        <option value="biosphere">Biosphere</option>
+        <option value="cryosphere">Cryosphere</option>
+      </select>
+      <label for="variable">Variable</label>
+      <select id="variable"></select>
     </div>
 
-</nav>
-
-
-<!-- =====================================================
-     HERO / 3D EARTH
-===================================================== -->
-
-<header class="hero">
-
-    <div id="earth-stage"></div>
-
-    <div class="hero-overlay"></div>
-
-
-    <!-- LEFT EARTH HUD -->
-
-    <div class="hud hud-left hud-panel">
-
-        <div class="hud-title">
-            Earth state
-        </div>
-
-        <div class="metric">
-            <span>Surface</span>
-            <strong id="surfaceTemp">
-                +0.42 K
-            </strong>
-        </div>
-
-        <div class="metric">
-            <span>Pressure</span>
-            <strong>
-                1012 hPa
-            </strong>
-        </div>
-
-        <div class="metric">
-            <span>Ocean</span>
-            <strong>
-                +0.18 K
-            </strong>
-        </div>
-
-        <div class="metric">
-            <span>Soil moisture</span>
-            <strong>
-                41%
-            </strong>
-        </div>
-
-        <div class="metric">
-            <span>Sea ice</span>
-            <strong>
-                86%
-            </strong>
-        </div>
-
+    <div class="section">
+      <div class="eyebrow">03 · How</div>
+      <h2>Analysis mode</h2>
+      <div class="modegrid">
+        <button class="mode active" data-mode="observe">◉ Observe</button>
+        <button class="mode" data-mode="analyse">⌁ Analyse</button>
+        <button class="mode" data-mode="forecast">↗ Forecast</button>
+        <button class="mode" data-mode="scenario">◇ Scenario</button>
+      </div>
+      <label for="horizon">Future horizon</label>
+      <select id="horizon">
+        <option value="7">7 days</option><option value="14" selected>14 days</option>
+        <option value="30">30 days</option><option value="90">90 days</option>
+        <option value="365">1 year</option><option value="3650">10 years · projection</option>
+      </select>
     </div>
 
-
-    <!-- RIGHT LAYERS -->
-
-    <div class="hud hud-right hud-panel">
-
-        <div class="hud-title">
-            Observation layers
-        </div>
-
-        <label class="layer-control">
-            <span>Satellite network</span>
-            <input
-                type="checkbox"
-                id="layerSatellites"
-                checked>
-        </label>
-
-        <label class="layer-control">
-            <span>Atmosphere</span>
-            <input
-                type="checkbox"
-                id="layerAtmosphere"
-                checked>
-        </label>
-
-        <label class="layer-control">
-            <span>Wind field</span>
-            <input
-                type="checkbox"
-                id="layerWind"
-                checked>
-        </label>
-
-        <label class="layer-control">
-            <span>Ocean</span>
-            <input
-                type="checkbox"
-                id="layerOcean"
-                checked>
-        </label>
-
-        <label class="layer-control">
-            <span>Observations</span>
-            <input
-                type="checkbox"
-                id="layerObservations"
-                checked>
-        </label>
-
+    <div class="section">
+      <div class="eyebrow">04 · Data & models</div>
+      <div class="grid2">
+        <div><label for="dataSource">Data source</label><select id="dataSource">
+          <option>ERA5 · planned</option><option>Satellite · planned</option><option>Ground observations · planned</option><option>Multi-source ensemble · planned</option>
+        </select></div>
+        <div><label for="model">Model</label><select id="model">
+          <option>Physics + AI ensemble</option><option>Numerical model</option><option>AI model</option><option>Statistical model</option><option>Scenario ensemble</option>
+        </select></div>
+      </div>
+      <div class="notice" style="margin-top:10px">Prototype mode: current outputs are illustrative. Real scientific datasets and forecast models will be connected in later TERRA versions.</div>
     </div>
 
+    <button class="run" id="runBtn">▶ Run TERRA</button>
+    <button class="secondary" id="resetBtn">Reset Earth view</button>
+  </aside>
 
-    <!-- HERO COPY -->
-
-    <div class="hero-copy">
-
-        <div class="eyebrow">
-            <span></span>
-            TERRA / prototype v2
-        </div>
-
-        <h1>
-            A living model of
-            <em>Earth.</em>
-        </h1>
-
-        <p>
-            TERRA is an experimental interface for a planetary
-            digital twin — connecting observations, physics,
-            simulation and artificial intelligence into a single
-            interactive Earth-system environment.
-        </p>
-
-        <div class="hero-actions">
-
-            <button
-                class="btn primary"
-                onclick="scrollToSection('scenario')">
-
-                Run scenario →
-
-            </button>
-
-            <button
-                class="btn"
-                onclick="resetEarth()">
-
-                Reset Earth
-
-            </button>
-
-        </div>
-
+  <aside class="panel right">
+    <div class="section">
+      <div class="eyebrow">Earth state</div>
+      <h2 id="resultTitle">Global · Surface temperature</h2>
+      <p id="resultSubtitle">Interactive prototype state for the selected Earth variable.</p>
+      <div class="statgrid">
+        <div class="stat"><span>Current estimate</span><strong id="currentValue">18.4 °C</strong></div>
+        <div class="stat"><span>Change</span><strong id="changeValue">+0.8 °C</strong></div>
+        <div class="stat"><span>Confidence</span><strong id="confidence">78%</strong></div>
+        <div class="stat"><span>Uncertainty</span><strong id="uncertainty">±1.6</strong></div>
+      </div>
     </div>
 
-
-    <div class="earth-hint">
-
-        DRAG · ROTATE &nbsp;&nbsp; SCROLL · ZOOM
-
+    <div class="section">
+      <div class="eyebrow">Forecast / projection</div>
+      <h3 id="forecastHeading">Illustrative future trajectory</h3>
+      <div class="forecast" id="chart"></div>
+      <div class="legend">
+        <span><i style="background:#54d7ff"></i>Central estimate</span>
+        <span><i style="background:#64748b"></i>Uncertainty envelope</span>
+      </div>
     </div>
 
-</header>
-
-
-<!-- =====================================================
-     EARTH SYSTEM
-===================================================== -->
-
-<section>
-
-    <div class="section-header">
-
-        <div>
-
-            <div class="section-tag">
-                01 — Earth system
-            </div>
-
-            <h2>
-                One planet.
-                Many interacting systems.
-            </h2>
-
-        </div>
-
-        <p>
-            TERRA treats the Earth as a connected system rather
-            than a collection of isolated models. Each subsystem
-            can eventually become connected to observations,
-            numerical models and AI.
-        </p>
-
+    <div class="section">
+      <div class="eyebrow">AI interpretation</div>
+      <div class="trace" id="aiTrace">
+        <b>READY</b><br>
+        Waiting for a TERRA run.<br>
+        <span class="good">✓ Location recognised</span><br>
+        <span class="good">✓ Variable registry loaded</span><br>
+        <span class="good">✓ Analysis pipeline available</span>
+      </div>
     </div>
 
-
-    <div class="system-grid">
-
-        <article class="system-card">
-
-            <span class="system-number">
-                SYS-01
-            </span>
-
-            <span class="system-state">
-                ACTIVE
-            </span>
-
-            <div class="system-icon">
-                ☁
-            </div>
-
-            <h3>
-                Atmosphere
-            </h3>
-
-            <p>
-                Temperature, pressure, humidity, winds,
-                clouds and atmospheric dynamics.
-            </p>
-
-        </article>
-
-
-        <article class="system-card">
-
-            <span class="system-number">
-                SYS-02
-            </span>
-
-            <span class="system-state">
-                ACTIVE
-            </span>
-
-            <div class="system-icon">
-                ◉
-            </div>
-
-            <h3>
-                Ocean
-            </h3>
-
-            <p>
-                Sea-surface temperature, circulation,
-                heat storage and ocean-atmosphere exchange.
-            </p>
-
-        </article>
-
-
-        <article class="system-card">
-
-            <span class="system-number">
-                SYS-03
-            </span>
-
-            <span class="system-state">
-                ACTIVE
-            </span>
-
-            <div class="system-icon">
-                ◒
-            </div>
-
-            <h3>
-                Land
-            </h3>
-
-            <p>
-                Soil moisture, vegetation, surface energy,
-                hydrology and terrestrial processes.
-            </p>
-
-        </article>
-
-
-        <article class="system-card">
-
-            <span class="system-number">
-                SYS-04
-            </span>
-
-            <span class="system-state">
-                ACTIVE
-            </span>
-
-            <div class="system-icon">
-                ✦
-            </div>
-
-            <h3>
-                Cryosphere
-            </h3>
-
-            <p>
-                Sea ice, snow, glaciers and frozen
-                land-surface processes.
-            </p>
-
-        </article>
-
-
-        <article class="system-card">
-
-            <span class="system-number">
-                SYS-05
-            </span>
-
-            <span class="system-state">
-                PROTOTYPE
-            </span>
-
-            <div class="system-icon">
-                ≋
-            </div>
-
-            <h3>
-                Chemistry
-            </h3>
-
-            <p>
-                Atmospheric composition, aerosols,
-                gases and chemical transport.
-            </p>
-
-        </article>
-
-
-        <article class="system-card">
-
-            <span class="system-number">
-                SYS-06
-            </span>
-
-            <span class="system-state">
-                PROTOTYPE
-            </span>
-
-            <div class="system-icon">
-                ♨
-            </div>
-
-            <h3>
-                Biosphere
-            </h3>
-
-            <p>
-                Vegetation, productivity, carbon exchange
-                and ecosystem response.
-            </p>
-
-        </article>
-
-
-        <article class="system-card">
-
-            <span class="system-number">
-                SYS-07
-            </span>
-
-            <span class="system-state">
-                PROTOTYPE
-            </span>
-
-            <div class="system-icon">
-                ⚡
-            </div>
-
-            <h3>
-                Space weather
-            </h3>
-
-            <p>
-                Solar radiation, geomagnetic conditions,
-                ionosphere and satellite environment.
-            </p>
-
-        </article>
-
-
-        <article class="system-card">
-
-            <span class="system-number">
-                SYS-08
-            </span>
-
-            <span class="system-state">
-                FUTURE
-            </span>
-
-            <div class="system-icon">
-                AI
-            </div>
-
-            <h3>
-                Intelligence
-            </h3>
-
-            <p>
-                Pattern detection, prediction, anomaly
-                detection, uncertainty and model comparison.
-            </p>
-
-        </article>
-
+    <div class="section">
+      <div class="eyebrow">Model trace</div>
+      <div class="trace" id="modelTrace">
+        LOCATION → VARIABLE → TIME → MODE<br>
+        <span class="warn">DATA → PHYSICS → AI → OUTPUT</span>
+      </div>
+      <label>Data completeness</label>
+      <div class="progress"><i id="progressBar"></i></div>
     </div>
 
-</section>
-
-
-<!-- =====================================================
-     SCENARIO ENGINE
-===================================================== -->
-
-<section id="scenario">
-
-    <div class="section-header">
-
-        <div>
-
-            <div class="section-tag">
-                02 — Scenario engine
-            </div>
-
-            <h2>
-                Ask Earth what happens next.
-            </h2>
-
-        </div>
-
-        <p>
-            The current engine is illustrative. The architecture
-            is designed so that these traces can eventually be
-            replaced by real model outputs and data assimilation.
-        </p>
-
+    <div class="section">
+      <div class="eyebrow">Scientific guardrail</div>
+      <p>Forecasts are not guarantees. A future production TERRA engine should report provenance, model assumptions, validation, uncertainty and data coverage alongside every result.</p>
     </div>
-
-
-    <div class="scenario">
-
-        <div class="scenario-input">
-
-            <div class="console-label">
-                Select perturbation
-            </div>
-
-            <div class="scenario-chips">
-
-                <button
-                    class="chip"
-                    data-scenario="seaice">
-
-                    Sea ice decline
-
-                </button>
-
-                <button
-                    class="chip"
-                    data-scenario="heat">
-
-                    Extreme warming
-
-                </button>
-
-                <button
-                    class="chip"
-                    data-scenario="volcano">
-
-                    Volcanic eruption
-
-                </button>
-
-                <button
-                    class="chip"
-                    data-scenario="drought">
-
-                    Severe drought
-
-                </button>
-
-            </div>
-
-
-            <div class="console-label">
-
-                Or describe a scenario
-
-            </div>
-
-            <input
-                id="scenarioInput"
-                placeholder="e.g. ocean temperature rises by 1°C">
-
-
-            <button
-                class="btn primary simulate"
-                onclick="runScenario()">
-
-                Simulate scenario →
-
-            </button>
-
-        </div>
-
-
-        <div class="scenario-output">
-
-            <div class="output-top">
-
-                <span>
-                    TERRA SIMULATION TRACE
-                </span>
-
-                <span id="scenarioStatus">
-                    READY
-                </span>
-
-            </div>
-
-            <div
-                id="trace"
-                class="trace">
-
-                <div style="color:var(--muted)">
-                    Select a scenario and initialise
-                    the simulation.
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- =====================================================
-     MODEL COMPARISON
-===================================================== -->
-
-<section>
-
-    <div class="section-header">
-
-        <div>
-
-            <div class="section-tag">
-                03 — Model consensus
-            </div>
-
-            <h2>
-                Never hide uncertainty.
-            </h2>
-
-        </div>
-
-        <p>
-            A future TERRA architecture should compare observations,
-            physics models and AI predictions instead of presenting
-            one number as absolute truth.
-        </p>
-
-    </div>
-
-
-    <div class="comparison">
-
-        <div class="model">
-
-            <div class="model-name">
-                Observation
-            </div>
-
-            <div class="model-value">
-                +2.3
-            </div>
-
-            <div class="model-unit">
-                K anomaly
-            </div>
-
-            <div class="model-bar">
-                <span style="width:82%"></span>
-            </div>
-
-        </div>
-
-
-        <div class="model">
-
-            <div class="model-name">
-                Physics model
-            </div>
-
-            <div class="model-value">
-                +2.1
-            </div>
-
-            <div class="model-unit">
-                K anomaly
-            </div>
-
-            <div class="model-bar">
-                <span style="width:72%"></span>
-            </div>
-
-        </div>
-
-
-        <div class="model">
-
-            <div class="model-name">
-                AI model
-            </div>
-
-            <div class="model-value">
-                +2.4
-            </div>
-
-            <div class="model-unit">
-                K anomaly
-            </div>
-
-            <div class="model-bar">
-                <span style="width:88%"></span>
-            </div>
-
-        </div>
-
-
-        <div class="model">
-
-            <div class="model-name">
-                Ensemble
-            </div>
-
-            <div class="model-value">
-                ±0.3
-            </div>
-
-            <div class="model-unit">
-                uncertainty
-            </div>
-
-            <div class="model-bar">
-                <span style="width:31%"></span>
-            </div>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- =====================================================
-     AI INTERPRETATION
-===================================================== -->
-
-<section>
-
-    <div class="section-header">
-
-        <div>
-
-            <div class="section-tag">
-                04 — Intelligence layer
-            </div>
-
-            <h2>
-                AI should explain the Earth state.
-            </h2>
-
-        </div>
-
-        <p>
-            TERRA should eventually use AI as an analytical
-            layer over observations and physical models,
-            rather than treating an LLM as the simulation engine.
-        </p>
-
-    </div>
-
-
-    <div class="ai-grid">
-
-        <div class="ai-panel">
-
-            <div class="ai-badge">
-                ● AI ANALYSIS
-            </div>
-
-            <h3>
-                Anomaly detected
-            </h3>
-
-            <p>
-                The current prototype detects a hypothetical
-                regional anomaly and generates an illustrative
-                explanation. In a production system, every
-                explanation would be tied to actual observations,
-                model outputs and uncertainty estimates.
-            </p>
-
-            <div class="evidence">
-
-                <div class="evidence-item">
-
-                    <span>
-                        Satellite observations
-                    </span>
-
-                    <span class="evidence-score">
-                        92%
-                    </span>
-
-                </div>
-
-                <div class="evidence-item">
-
-                    <span>
-                        Reanalysis agreement
-                    </span>
-
-                    <span class="evidence-score">
-                        86%
-                    </span>
-
-                </div>
-
-                <div class="evidence-item">
-
-                    <span>
-                        Model ensemble
-                    </span>
-
-                    <span class="evidence-score">
-                        78%
-                    </span>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div class="ai-panel">
-
-            <div class="ai-badge">
-                ● MODEL DIAGNOSTICS
-            </div>
-
-            <h3>
-                Why did the models disagree?
-            </h3>
-
-            <p>
-                Model disagreement is itself information.
-                TERRA can eventually identify where numerical
-                models diverge, determine whether observations
-                support one model more strongly, and communicate
-                the resulting uncertainty.
-            </p>
-
-            <div class="confidence">
-
-                <div class="confidence-head">
-
-                    <span>
-                        CURRENT CONFIDENCE
-                    </span>
-
-                    <strong>
-                        78%
-                    </strong>
-
-                </div>
-
-                <div class="confidence-bar">
-
-                    <div class="confidence-fill"></div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- =====================================================
-     TIME CONTROL
-===================================================== -->
-
-<section>
-
-    <div class="section-header">
-
-        <div>
-
-            <div class="section-tag">
-                05 — Temporal state
-            </div>
-
-            <h2>
-                Earth changes through time.
-            </h2>
-
-        </div>
-
-        <p>
-            The timeline is currently visual only. It is designed
-            to become the control for historical observations,
-            reanalysis and future simulations.
-        </p>
-
-    </div>
-
-
-    <div class="timeline">
-
-        <div class="timeline-top">
-
-            <span>
-                HISTORICAL ← → FUTURE
-            </span>
-
-            <strong id="yearLabel">
-                2026
-            </strong>
-
-        </div>
-
-        <input
-            id="yearSlider"
-            type="range"
-            min="1990"
-            max="2050"
-            value="2026">
-
-    </div>
-
-</section>
-
-
-<!-- =====================================================
-     FOOTER
-===================================================== -->
-
-<footer>
-
-    <div>
-
-        <strong>
-            TERRA
-        </strong>
-
-        — experimental Earth-system digital twin interface.
-
-    </div>
-
-    <div>
-
-        PROTOTYPE · NO LIVE SCIENTIFIC MODEL CONNECTED
-
-    </div>
-
-</footer>
-
-
-<!-- =====================================================
-     THREE.JS
-===================================================== -->
+  </aside>
+
+  <div class="timeline">
+    <div class="timehead"><span>Temporal state</span><strong id="dateLabel">15 AUG 2026 · PRESENT</strong></div>
+    <input id="timeSlider" type="range" min="0" max="100" value="50">
+  </div>
+
+  <div class="footer">TERRA v3 · 3D PROTOTYPE · NO LIVE SCIENTIFIC MODEL CONNECTED</div>
+</div>
 
 <script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-import * as THREE from
-'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+const sceneHost = document.getElementById('scene');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x020711);
 
-import { OrbitControls } from
-'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/OrbitControls.js';
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 1000);
+camera.position.set(0, 1.1, 8.5);
 
+const renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+sceneHost.appendChild(renderer.domElement);
 
-/* =========================================================
-   CORE THREE.JS SETUP
-========================================================= */
-
-const container =
-    document.getElementById('earth-stage');
-
-const scene =
-    new THREE.Scene();
-
-scene.background =
-    new THREE.Color(0x030711);
-
-
-const camera =
-    new THREE.PerspectiveCamera(
-        42,
-        window.innerWidth /
-        window.innerHeight,
-        0.1,
-        1000
-    );
-
-camera.position.set(
-    0,
-    0.25,
-    4.6
-);
-
-
-const renderer =
-    new THREE.WebGLRenderer({
-        antialias:true,
-        alpha:true,
-        powerPreference:'high-performance'
-    });
-
-renderer.setPixelRatio(
-    Math.min(window.devicePixelRatio,2)
-);
-
-renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
-);
-
-renderer.outputColorSpace =
-    THREE.SRGBColorSpace;
-
-container.appendChild(
-    renderer.domElement
-);
-
-
-/* =========================================================
-   CAMERA CONTROLS
-========================================================= */
-
-const controls =
-    new OrbitControls(
-        camera,
-        renderer.domElement
-    );
-
+const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-
 controls.dampingFactor = .045;
-
+controls.minDistance = 4.5;
+controls.maxDistance = 15;
 controls.enablePan = false;
-
-controls.minDistance = 2.4;
-
-controls.maxDistance = 8;
-
 controls.autoRotate = true;
+controls.autoRotateSpeed = .35;
 
-controls.autoRotateSpeed = .25;
+scene.add(new THREE.AmbientLight(0x9ccfff, .55));
+const sun = new THREE.DirectionalLight(0xffffff, 2.4);
+sun.position.set(6,4,6);
+scene.add(sun);
 
-
-/* =========================================================
-   LIGHTING
-========================================================= */
-
-const ambient =
-    new THREE.AmbientLight(
-        0x9ab8ff,
-        0.35
-    );
-
-scene.add(ambient);
-
-
-const sunLight =
-    new THREE.DirectionalLight(
-        0xffffff,
-        2.2
-    );
-
-sunLight.position.set(
-    5,
-    2,
-    4
-);
-
-scene.add(sunLight);
-
-
-/* =========================================================
-   EARTH
-========================================================= */
-
-const earthGroup =
-    new THREE.Group();
-
+const earthGroup = new THREE.Group();
 scene.add(earthGroup);
 
-
-const earthGeometry =
-    new THREE.SphereGeometry(
-        1.55,
-        96,
-        96
-    );
-
-
-const earthMaterial =
-    new THREE.MeshPhongMaterial({
-
-        color:0x244d72,
-
-        shininess:12,
-
-        specular:0x3e6f96
-
-    });
-
-
-const earth =
-    new THREE.Mesh(
-        earthGeometry,
-        earthMaterial
-    );
-
+const earth = new THREE.Mesh(
+  new THREE.SphereGeometry(2.35, 96, 96),
+  new THREE.MeshStandardMaterial({color:0x1b67a5, roughness:.75, metalness:.02})
+);
 earthGroup.add(earth);
 
-
-/* =========================================================
-   EARTH WIREFRAME
-========================================================= */
-
-const wireGeometry =
-    new THREE.SphereGeometry(
-        1.565,
-        48,
-        48
-    );
-
-const wireMaterial =
-    new THREE.MeshBasicMaterial({
-
-        color:0x6acfff,
-
-        wireframe:true,
-
-        transparent:true,
-
-        opacity:.055
-
-    });
-
-const wire =
-    new THREE.Mesh(
-        wireGeometry,
-        wireMaterial
-    );
-
-earthGroup.add(wire);
-
-
-/* =========================================================
-   ATMOSPHERE GLOW
-========================================================= */
-
-const atmosphereGeometry =
-    new THREE.SphereGeometry(
-        1.66,
-        96,
-        96
-    );
-
-const atmosphereMaterial =
-    new THREE.MeshBasicMaterial({
-
-        color:0x45c8ff,
-
-        transparent:true,
-
-        opacity:.075,
-
-        side:THREE.BackSide
-
-    });
-
-const atmosphere =
-    new THREE.Mesh(
-        atmosphereGeometry,
-        atmosphereMaterial
-    );
-
+const atmosphere = new THREE.Mesh(
+  new THREE.SphereGeometry(2.48, 64, 64),
+  new THREE.MeshBasicMaterial({color:0x4dcfff, transparent:true, opacity:.075, side:THREE.BackSide, blending:THREE.AdditiveBlending})
+);
 earthGroup.add(atmosphere);
 
-
-/* =========================================================
-   SECOND ATMOSPHERIC SHELL
-========================================================= */
-
-const atmosphere2 =
-    new THREE.Mesh(
-
-        new THREE.SphereGeometry(
-            1.72,
-            64,
-            64
-        ),
-
-        new THREE.MeshBasicMaterial({
-
-            color:0x5577ff,
-
-            transparent:true,
-
-            opacity:.025,
-
-            side:THREE.BackSide
-
-        })
-
-    );
-
-earthGroup.add(
-    atmosphere2
+const cloudShell = new THREE.Mesh(
+  new THREE.SphereGeometry(2.405, 64, 64),
+  new THREE.MeshBasicMaterial({color:0xd9f4ff, transparent:true, opacity:.055, side:THREE.DoubleSide})
 );
+earthGroup.add(cloudShell);
 
-
-/* =========================================================
-   SATELLITES
-========================================================= */
-
-const satelliteGroup =
-    new THREE.Group();
-
-scene.add(
-    satelliteGroup
-);
-
-const satellites = [];
-
-
-function createSatellite(
-    radius,
-    speed,
-    inclination,
-    color
-){
-
-    const group =
-        new THREE.Group();
-
-    const body =
-        new THREE.Mesh(
-
-            new THREE.BoxGeometry(
-                .08,
-                .045,
-                .045
-            ),
-
-            new THREE.MeshBasicMaterial({
-                color
-            })
-
-        );
-
-    group.add(body);
-
-
-    const panelMaterial =
-        new THREE.MeshBasicMaterial({
-            color:0x78aaff
-        });
-
-
-    const panel1 =
-        new THREE.Mesh(
-
-            new THREE.BoxGeometry(
-                .18,
-                .012,
-                .06
-            ),
-
-            panelMaterial
-
-        );
-
-    panel1.position.x =
-        .13;
-
-    group.add(panel1);
-
-
-    const panel2 =
-        panel1.clone();
-
-    panel2.position.x =
-        -.13;
-
-    group.add(panel2);
-
-
-    const orbit =
-        new THREE.Object3D();
-
-    orbit.rotation.z =
-        inclination;
-
-    orbit.add(group);
-
-    satelliteGroup.add(
-        orbit
-    );
-
-
-    satellites.push({
-
-        orbit,
-
-        body,
-
-        radius,
-
-        speed,
-
-        angle:
-            Math.random() * Math.PI * 2
-
-    });
-
+// Lat/lon helper: x east, y north, z outward.
+function latLon(lat, lon, r=2.39){
+  const p = THREE.MathUtils.degToRad(90-lat);
+  const t = THREE.MathUtils.degToRad(lon+180);
+  return new THREE.Vector3(
+    -r*Math.sin(p)*Math.cos(t),
+     r*Math.cos(p),
+     r*Math.sin(p)*Math.sin(t)
+  );
 }
 
-
-createSatellite(
-    2.25,
-    .0007,
-    .3,
-    0xa78bfa
-);
-
-createSatellite(
-    2.55,
-    -.00045,
-    -.5,
-    0x63d9ff
-);
-
-createSatellite(
-    2.85,
-    .00035,
-    .8,
-    0xffb86b
-);
-
-createSatellite(
-    2.4,
-    -.00025,
-    1.1,
-    0x5ee6a8
-);
-
-
-/* =========================================================
-   OBSERVATION POINTS
-========================================================= */
-
-const observationGroup =
-    new THREE.Group();
-
-scene.add(
-    observationGroup
-);
-
-
-function latLonToVector(
-    lat,
-    lon,
-    radius
-){
-
-    const phi =
-        (90-lat) *
-        Math.PI /
-        180;
-
-    const theta =
-        (lon+180) *
-        Math.PI /
-        180;
-
-    return new THREE.Vector3(
-
-        -radius *
-        Math.sin(phi) *
-        Math.cos(theta),
-
-        radius *
-        Math.cos(phi),
-
-        radius *
-        Math.sin(phi) *
-        Math.sin(theta)
-
-    );
-
+// Subtle latitude/longitude grid
+const gridGroup = new THREE.Group();
+for(let lat=-60;lat<=60;lat+=30){
+  const pts=[];
+  for(let lon=-180;lon<=180;lon+=4) pts.push(latLon(lat,lon,2.39));
+  const geo=new THREE.BufferGeometry().setFromPoints(pts);
+  gridGroup.add(new THREE.Line(geo,new THREE.LineBasicMaterial({color:0x72cfff,transparent:true,opacity:.055})));
 }
-
-
-const observationLocations = [
-
-    [34,-18],
-    [-30,25],
-    [0,20],
-    [40,-100],
-    [20,80],
-    [-20,135],
-    [60,30],
-    [-5,-60]
-
-];
-
-
-observationLocations.forEach(
-    ([lat,lon])=>{
-
-        const position =
-            latLonToVector(
-                lat,
-                lon,
-                1.59
-            );
-
-        const dot =
-            new THREE.Mesh(
-
-                new THREE.SphereGeometry(
-                    .018,
-                    8,
-                    8
-                ),
-
-                new THREE.MeshBasicMaterial({
-                    color:0x5ee6a8
-                })
-
-            );
-
-        dot.position.copy(
-            position
-        );
-
-        observationGroup.add(
-            dot
-        );
-
-    }
-);
-
-
-/* =========================================================
-   WIND PARTICLES
-========================================================= */
-
-const windGroup =
-    new THREE.Group();
-
-scene.add(
-    windGroup
-);
-
-const windParticles = [];
-
-for(let i=0;i<170;i++){
-
-    const lat =
-        THREE.MathUtils.randFloatSpread(140);
-
-    const lon =
-        THREE.MathUtils.randFloatSpread(360);
-
-    const pos =
-        latLonToVector(
-            lat,
-            lon,
-            THREE.MathUtils.randFloat(
-                1.68,
-                1.76
-            )
-        );
-
-    const geometry =
-        new THREE.BufferGeometry();
-
-    geometry.setAttribute(
-        'position',
-        new THREE.Float32BufferAttribute(
-            [
-                pos.x,
-                pos.y,
-                pos.z
-            ],
-            3
-        )
-    );
-
-    const material =
-        new THREE.PointsMaterial({
-
-            color:0x63d9ff,
-
-            size:.018,
-
-            transparent:true,
-
-            opacity:.55
-
-        });
-
-    const particle =
-        new THREE.Points(
-            geometry,
-            material
-        );
-
-    particle.userData = {
-
-        lat,
-        lon,
-
-        speed:
-            THREE.MathUtils.randFloat(
-                .001,
-                .003
-            )
-
-    };
-
-    windGroup.add(
-        particle
-    );
-
-    windParticles.push(
-        particle
-    );
-
+for(let lon=-150;lon<=180;lon+=30){
+  const pts=[];
+  for(let lat=-90;lat<=90;lat+=4) pts.push(latLon(lat,lon,2.39));
+  const geo=new THREE.BufferGeometry().setFromPoints(pts);
+  gridGroup.add(new THREE.Line(geo,new THREE.LineBasicMaterial({color:0x72cfff,transparent:true,opacity:.055})));
 }
+earthGroup.add(gridGroup);
 
-
-/* =========================================================
-   OCEAN RING
-========================================================= */
-
-const oceanRing =
-    new THREE.Mesh(
-
-        new THREE.SphereGeometry(
-            1.575,
-            64,
-            64
-        ),
-
-        new THREE.MeshBasicMaterial({
-
-            color:0x1b8a80,
-
-            transparent:true,
-
-            opacity:.035,
-
-            wireframe:true
-
-        })
-
-    );
-
-earthGroup.add(
-    oceanRing
-);
-
-
-/* =========================================================
-   STAR FIELD
-========================================================= */
-
-const starGeometry =
-    new THREE.BufferGeometry();
-
-const starPositions = [];
-
-for(let i=0;i<1800;i++){
-
-    const radius =
-        THREE.MathUtils.randFloat(
-            20,
-            80
-        );
-
-    const theta =
-        Math.random() *
-        Math.PI *
-        2;
-
-    const phi =
-        Math.acos(
-            THREE.MathUtils.randFloatSpread(2)
-        );
-
-    starPositions.push(
-
-        radius *
-        Math.sin(phi) *
-        Math.cos(theta),
-
-        radius *
-        Math.cos(phi),
-
-        radius *
-        Math.sin(phi) *
-        Math.sin(theta)
-
-    );
-
+// Observation nodes
+const nodeGroup = new THREE.Group();
+const nodeMat = new THREE.MeshBasicMaterial({color:0x54d7ff});
+for(let i=0;i<90;i++){
+  const u=Math.random(), v=Math.random();
+  const lat=90-Math.acos(2*u-1)*180/Math.PI;
+  const lon=360*v-180;
+  const n=new THREE.Mesh(new THREE.SphereGeometry(.018,8,8),nodeMat);
+  n.position.copy(latLon(lat,lon,2.405));
+  nodeGroup.add(n);
 }
-
-starGeometry.setAttribute(
-
-    'position',
-
-    new THREE.Float32BufferAttribute(
-        starPositions,
-        3
-    )
-
-);
-
-const starMaterial =
-    new THREE.PointsMaterial({
-
-        color:0x9bbcff,
-
-        size:.045,
-
-        transparent:true,
-
-        opacity:.65
-
-    });
-
-const stars =
-    new THREE.Points(
-        starGeometry,
-        starMaterial
-    );
-
-scene.add(
-    stars
-);
-
-
-/* =========================================================
-   SUN
-========================================================= */
-
-const sun =
-    new THREE.Mesh(
-
-        new THREE.SphereGeometry(
-            .16,
-            24,
-            24
-        ),
-
-        new THREE.MeshBasicMaterial({
-            color:0xffd27a
-        })
-
-    );
-
-sun.position.set(
-    5,
-    2,
-    4
-);
-
-scene.add(
-    sun
-);
-
-
-/* =========================================================
-   LAYER CONTROLS
-========================================================= */
-
-document
-    .getElementById('layerSatellites')
-    .addEventListener(
-        'change',
-        e=>{
-
-            satelliteGroup.visible =
-                e.target.checked;
-
-        }
-    );
-
-
-document
-    .getElementById('layerAtmosphere')
-    .addEventListener(
-        'change',
-        e=>{
-
-            atmosphere.visible =
-                e.target.checked;
-
-            atmosphere2.visible =
-                e.target.checked;
-
-        }
-    );
-
-
-document
-    .getElementById('layerWind')
-    .addEventListener(
-        'change',
-        e=>{
-
-            windGroup.visible =
-                e.target.checked;
-
-        }
-    );
-
-
-document
-    .getElementById('layerOcean')
-    .addEventListener(
-        'change',
-        e=>{
-
-            oceanRing.visible =
-                e.target.checked;
-
-        }
-    );
-
-
-document
-    .getElementById('layerObservations')
-    .addEventListener(
-        'change',
-        e=>{
-
-            observationGroup.visible =
-                e.target.checked;
-
-        }
-    );
-
-
-/* =========================================================
-   ANIMATION
-========================================================= */
-
-const clock =
-    new THREE.Clock();
-
-
-function animate(){
-
-    requestAnimationFrame(
-        animate
-    );
-
-    const delta =
-        clock.getDelta();
-
-
-    controls.update();
-
-
-    earth.rotation.y +=
-        delta * .035;
-
-    wire.rotation.y +=
-        delta * .035;
-
-
-    oceanRing.rotation.y +=
-        delta * .05;
-
-
-    /* satellites */
-
-    satellites.forEach(
-        sat=>{
-
-            sat.angle +=
-                sat.speed;
-
-            sat.orbit.rotation.y =
-                sat.angle;
-
-            sat.body.rotation.y +=
-                delta;
-
-            sat.body.position.x =
-                sat.radius;
-
-        }
-    );
-
-
-    /* wind */
-
-    windParticles.forEach(
-        particle=>{
-
-            particle.userData.lon +=
-                particle.userData.speed * 20;
-
-            const position =
-                latLonToVector(
-
-                    particle.userData.lat,
-
-                    particle.userData.lon,
-
-                    1.70
-
-                );
-
-            particle.position.copy(
-                position
-            );
-
-        }
-    );
-
-
-    renderer.render(
-        scene,
-        camera
-    );
-
+earthGroup.add(nodeGroup);
+
+// Satellites
+const satGroup = new THREE.Group();
+function makeSatellite(angle, radius, color=0x9eeaff){
+  const sat=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.BoxGeometry(.12,.08,.22),new THREE.MeshStandardMaterial({color:0x71859a,metalness:.7,roughness:.35}));
+  const panel=new THREE.Mesh(new THREE.BoxGeometry(.42,.025,.12),new THREE.MeshBasicMaterial({color:color}));
+  panel.position.x=.27;
+  sat.add(body,panel);
+  sat.userData={angle,radius};
+  satGroup.add(sat);
 }
+makeSatellite(0,3.55); makeSatellite(2.2,3.85,0x7effc4); makeSatellite(4.3,4.15,0xffd36e);
+earthGroup.add(satGroup);
 
-animate();
+// Orbit rings
+[3.55,3.85,4.15].forEach((r,i)=>{
+  const ring=new THREE.Mesh(
+    new THREE.TorusGeometry(r,.006,8,160),
+    new THREE.MeshBasicMaterial({color:[0x54d7ff,0x52e0a5,0xffc857][i],transparent:true,opacity:.18})
+  );
+  ring.rotation.x = THREE.MathUtils.degToRad(63-i*18);
+  earthGroup.add(ring);
+});
 
+// Starfield
+const starGeo=new THREE.BufferGeometry();
+const starCount=1800, positions=new Float32Array(starCount*3);
+for(let i=0;i<starCount;i++){
+  const r=45+Math.random()*50, a=Math.random()*Math.PI*2, b=Math.acos(2*Math.random()-1);
+  positions[i*3]=r*Math.sin(b)*Math.cos(a);
+  positions[i*3+1]=r*Math.cos(b);
+  positions[i*3+2]=r*Math.sin(b)*Math.sin(a);
+}
+starGeo.setAttribute('position',new THREE.BufferAttribute(positions,3));
+scene.add(new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xbad9ff,size:.06,sizeAttenuation:true})));
 
-/* =========================================================
-   RESIZE
-========================================================= */
-
-window.addEventListener(
-    'resize',
-    ()=>{
-
-        camera.aspect =
-            window.innerWidth /
-            window.innerHeight;
-
-        camera.updateProjectionMatrix();
-
-        renderer.setSize(
-            window.innerWidth,
-            window.innerHeight
-        );
-
-        renderer.setPixelRatio(
-            Math.min(
-                window.devicePixelRatio,
-                2
-            )
-        );
-
-    }
-);
-
-
-/* =========================================================
-   RESET EARTH
-========================================================= */
-
-window.resetEarth =
-function(){
-
-    camera.position.set(
-        0,
-        .25,
-        4.6
-    );
-
-    controls.target.set(
-        0,
-        0,
-        0
-    );
-
-    controls.update();
-
+const locations={
+ global:{name:'Global Earth',lat:0,lon:0},
+ za:{name:'South Africa',lat:-30.56,lon:22.94},
+ na:{name:'Namibia',lat:-22.56,lon:17.08},
+ bw:{name:'Botswana',lat:-22.33,lon:24.68},
+ zm:{name:'Zambia',lat:-13.13,lon:27.85},
+ zw:{name:'Zimbabwe',lat:-19.02,lon:29.15},
+ ke:{name:'Kenya',lat:.02,lon:37.91},
+ ng:{name:'Nigeria',lat:9.08,lon:8.68},
+ de:{name:'Germany',lat:51.16,lon:10.45},
+ us:{name:'United States',lat:39.8,lon:-98.6},
+ br:{name:'Brazil',lat:-10.8,lon:-51.9},
+ in:{name:'India',lat:22.9,lon:79.0},
+ au:{name:'Australia',lat:-25.3,lon:133.8}
 };
 
-
-/* =========================================================
-   SCROLL
-========================================================= */
-
-window.scrollToSection =
-function(id){
-
-    document
-        .getElementById(id)
-        .scrollIntoView({
-            behavior:'smooth'
-        });
-
+const variables={
+ atmosphere:[
+  ['temperature','Surface temperature','°C'],['pressure','Surface pressure','hPa'],['wind','Wind speed','m/s'],
+  ['humidity','Relative humidity','%'],['rain','Precipitation','mm/day'],['radiation','Surface radiation','W/m²']
+ ],
+ air:[
+  ['pm25','PM₂.₅','µg/m³'],['pm10','PM₁₀','µg/m³'],['o3','O₃','µg/m³'],['no2','NO₂','µg/m³'],
+  ['so2','SO₂','µg/m³'],['co','CO','mg/m³'],['co2','CO₂','ppm'],['ch4','CH₄','ppb'],['nh3','NH₃','µg/m³'],
+  ['hg0','Mercury · Hg⁰','ng/m³'],['hg2','Oxidised mercury · Hg²⁺','pg/m³'],['hgp','Particulate mercury','pg/m³'],
+  ['aerosol','Aerosol optical depth','dimensionless']
+ ],
+ climate:[
+  ['heatwave','Heatwave','event'],['drought','Drought index','index'],['extremeRain','Extreme rainfall','mm/day'],
+  ['tempAnomaly','Temperature anomaly','°C'],['seaLevel','Sea-level anomaly','mm']
+ ],
+ ocean:[
+  ['sst','Sea-surface temperature','°C'],['salinity','Sea-surface salinity','PSU'],['current','Surface current','m/s'],
+  ['oceanHeat','Ocean heat content','GJ/m²'],['chlorophyll','Chlorophyll-a','mg/m³']
+ ],
+ land:[
+  ['soil','Soil moisture','m³/m³'],['lst','Land-surface temperature','°C'],['ndvi','NDVI','index'],
+  ['et','Evapotranspiration','mm/day'],['fire','Fire activity','index']
+ ],
+ biosphere:[
+  ['productivity','Net primary productivity','gC/m²/day'],['carbon','Carbon exchange','gC/m²/day'],
+  ['biomass','Biomass','kg/m²'],['phenology','Phenology shift','days'],['ecosystem','Ecosystem stress','index']
+ ],
+ cryosphere:[
+  ['snow','Snow cover','%'],['seaIce','Sea-ice extent','million km²'],['glacier','Glacier mass balance','m w.e.'],
+  ['iceTemp','Ice temperature','°C']
+ ]
 };
 
+const domainEl=document.getElementById('domain');
+const variableEl=document.getElementById('variable');
+const locationEl=document.getElementById('location');
+const horizonEl=document.getElementById('horizon');
+let mode='observe', currentLocation='global', currentVariable='temperature';
+
+function populateVariables(){
+  const list=variables[domainEl.value];
+  variableEl.innerHTML=list.map(v=>`<option value="${v[0]}">${v[1]}</option>`).join('');
+  currentVariable=variableEl.value;
+  updateUI();
+}
+function selectedVariable(){
+  for(const list of Object.values(variables)) for(const v of list) if(v[0]===variableEl.value) return v;
+  return ['temperature','Surface temperature','°C'];
+}
+function loc(){
+  return locations[currentLocation] || locations.global;
+}
+
+function updateUI(){
+  const v=selectedVariable(), l=loc();
+  document.getElementById('sceneBadge').textContent=`EARTH STATE · ${l.name.toUpperCase()}`;
+  document.getElementById('resultTitle').textContent=`${l.name} · ${v[1]}`;
+  document.getElementById('resultSubtitle').textContent=`${modeLabel()} mode · ${v[2]} · TERRA prototype`;
+}
+function modeLabel(){return {observe:'Observation',analyse:'Analysis',forecast:'Forecast',scenario:'Scenario'}[mode]}
+
+domainEl.addEventListener('change',populateVariables);
+variableEl.addEventListener('change',()=>{currentVariable=variableEl.value;updateUI()});
+locationEl.addEventListener('change',()=>{
+  currentLocation=locationEl.value;
+  focusLocation(loc().lat,loc().lon);
+  updateUI();
+});
+document.querySelectorAll('.mode').forEach(btn=>{
+ btn.addEventListener('click',()=>{
+  document.querySelectorAll('.mode').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); mode=btn.dataset.mode;
+  horizonEl.parentElement.style.opacity = mode==='observe' ? '.45':'1';
+  updateUI();
+ });
+});
+
+function focusLocation(lat,lon){
+ if(lat===0 && lon===0){camera.position.set(0,1.1,8.5);controls.target.set(0,0,0);controls.update();return}
+ const p=latLon(lat,lon,6.9);
+ const target=latLon(lat,lon,0);
+ const dir=p.clone().normalize();
+ camera.position.copy(dir.multiplyScalar(7.2));
+ controls.target.set(0,0,0);
+ controls.update();
+ showPin(lat,lon);
+}
+function showPin(lat,lon){
+ const pin=document.getElementById('locationPin');
+ if(lat===0&&lon===0){pin.style.display='none';return}
+ pin.style.display='block';
+ const p=latLon(lat,lon,2.52).project(camera);
+ pin.style.left=((p.x+1)/2*innerWidth)+'px';
+ pin.style.top=((-p.y+1)/2*innerHeight)+'px';
+}
+
+function seeded(){
+ const str=(currentLocation+currentVariable+mode).split('').reduce((a,c)=>((a<<5)-a)+c.charCodeAt(0)|0,0);
+ return Math.abs(Math.sin(str))*1e4;
+}
+function baseValue(){
+ const id=variableEl.value, s=seeded();
+ const map={
+  temperature:[18,2,'°C'],pressure:[1013,6,'hPa'],wind:[6,2,'m/s'],humidity:[61,12,'%'],rain:[2.8,2,'mm/day'],radiation:[180,40,'W/m²'],
+  pm25:[22,8,'µg/m³'],pm10:[38,13,'µg/m³'],o3:[72,18,'µg/m³'],no2:[28,10,'µg/m³'],so2:[12,6,'µg/m³'],co:[.55,.2,'mg/m³'],co2:[421,5,'ppm'],ch4:[1905,30,'ppb'],nh3:[9,4,'µg/m³'],
+  hg0:[1.45,.35,'ng/m³'],hg2:[18,7,'pg/m³'],hgp:[7,3,'pg/m³'],aerosol:[.35,.15,'index'],
+  heatwave:[3,1,'days'],drought:[.42,.16,'index'],extremeRain:[38,16,'mm/day'],tempAnomaly:[.7,.5,'°C'],seaLevel:[45,18,'mm'],
+  sst:[20,4,'°C'],salinity:[35,1,'PSU'],current:[.45,.2,'m/s'],oceanHeat:[12,3,'GJ/m²'],chlorophyll:[.8,.4,'mg/m³'],
+  soil:[.28,.1,'m³/m³'],lst:[24,5,'°C'],ndvi:[.55,.2,'index'],et:[3.1,1,'mm/day'],fire:[.28,.18,'index'],
+  productivity:[2.1,.8,'gC/m²/day'],carbon:[-.4,.3,'gC/m²/day'],biomass:[6,2,'kg/m²'],phenology:[8,4,'days'],ecosystem:[.34,.15,'index'],
+  snow:[31,15,'%'],seaIce:[8.1,1.4,'million km²'],glacier:[-.45,.18,'m w.e.'],iceTemp:[-8,2,'°C']
+ };
+ const [v,spread,u]=map[id]||[1,.2,'unit'];
+ return {v:v + (s%1-.5)*spread, spread, unit:u};
+}
+
+function makeChart(){
+ const el=document.getElementById('chart');
+ const W=340,H=150,pad=22;
+ const n=12, b=baseValue(), values=[];
+ for(let i=0;i<n;i++){
+  const trend=(mode==='forecast'||mode==='scenario') ? (i/n)*b.spread*(mode==='scenario'?1.6:.8) : Math.sin(i*.7)*b.spread*.25;
+  values.push(b.v+trend+Math.sin(i*1.17+seeded())*b.spread*.25);
+ }
+ const min=Math.min(...values)-b.spread, max=Math.max(...values)+b.spread;
+ const pts=values.map((v,i)=>{
+  const x=pad+i*(W-pad*2)/(n-1), y=H-pad-(v-min)/(max-min)*(H-pad*2); return [x,y];
+ });
+ const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+ const upper=pts.map((p,i)=>`${p[0].toFixed(1)},${Math.max(p[1]-10,18).toFixed(1)}`).join(' ');
+ const lower=pts.slice().reverse().map(p=>`${p[0].toFixed(1)},${Math.min(p[1]+10,H-18).toFixed(1)}`).join(' ');
+ el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+ <defs><linearGradient id="g" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#54d7ff" stop-opacity=".18"/><stop offset="1" stop-color="#54d7ff" stop-opacity="0"/></linearGradient></defs>
+ <path d="M${upper} L${lower} Z" fill="url(#g)"/>
+ <path d="${line}" fill="none" stroke="#54d7ff" stroke-width="2.4" stroke-linecap="round"/>
+ ${pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="2.2" fill="#dff8ff"/>`).join('')}
+ <line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" stroke="#28435e" stroke-width="1"/>
+ <text x="${pad}" y="${H-5}" fill="#607a95" font-size="8">T+0</text>
+ <text x="${W-pad-28}" y="${H-5}" fill="#607a95" font-size="8">FUTURE</text>
+ </svg>`;
+}
+
+function run(){
+ const v=selectedVariable(), l=loc(), b=baseValue();
+ const value=b.v.toFixed(Math.abs(b.v)<10?2:1);
+ const conf=Math.round(68+(seeded()%1)*22);
+ const unc=(b.spread*.55).toFixed(Math.abs(b.spread)<10?1:0);
+ document.getElementById('currentValue').textContent=`${value} ${b.unit}`;
+ document.getElementById('changeValue').textContent=(b.spread*.35>=0?'+':'')+(b.spread*.35).toFixed(Math.abs(b.spread)<10?1:0)+` ${b.unit}`;
+ document.getElementById('confidence').textContent=conf+'%';
+ document.getElementById('uncertainty').textContent=`±${unc} ${b.unit}`;
+ document.getElementById('forecastHeading').textContent=mode==='observe'?'Illustrative state trajectory':`${modeLabel()} · illustrative trajectory`;
+ makeChart();
+ const horizon=horizonEl.options[horizonEl.selectedIndex].text;
+ document.getElementById('aiTrace').innerHTML=
+ `<b>RUN COMPLETE</b><br>`+
+ `<span class="good">✓ Location:</span> ${l.name}<br>`+
+ `<span class="good">✓ Variable:</span> ${v[1]} (${v[2]})<br>`+
+ `<span class="good">✓ Mode:</span> ${modeLabel()}<br>`+
+ `<span class="good">✓ Horizon:</span> ${horizon}<br>`+
+ `<span class="warn">△ AI interpretation is illustrative</span><br>`+
+ `Potential pattern: ${mode==='forecast'?'persistent directional signal with increasing uncertainty':'spatial-temporal variability detected'}.`;
+ document.getElementById('modelTrace').innerHTML=
+ `LOCATION → ${l.name}<br>`+
+ `VARIABLE → ${v[1]}<br>`+
+ `TIME → ${horizon}<br>`+
+ `MODE → ${modeLabel()}<br>`+
+ `<span class="warn">DATA → PHYSICS → AI → OUTPUT</span>`;
+ document.getElementById('progressBar').style.width=conf+'%';
+}
+
+document.getElementById('runBtn').addEventListener('click',run);
+document.getElementById('resetBtn').addEventListener('click',()=>{
+ currentLocation='global';locationEl.value='global';focusLocation(0,0);updateUI();
+});
+document.getElementById('searchBtn').addEventListener('click',()=>{
+ const q=document.getElementById('locationSearch').value.trim().toLowerCase();
+ const match=Object.entries(locations).find(([k,v])=>v.name.toLowerCase().includes(q));
+ if(match){currentLocation=match[0];locationEl.value=match[0];focusLocation(match[1].lat,match[1].lon);updateUI();}
+ else{
+   document.getElementById('locationSearch').value='';
+   document.getElementById('locationSearch').placeholder='Try a listed country first';
+ }
+});
+
+document.getElementById('timeSlider').addEventListener('input',e=>{
+ const x=Number(e.target.value);
+ const date=new Date(Date.UTC(2026,7,15)+(x-50)*86400000*1.2);
+ const label=date.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
+ document.getElementById('dateLabel').textContent=`${label} · ${x<50?'PAST':x>50?'FUTURE':'PRESENT'}`;
+});
+
+populateVariables();
+run();
+
+function animate(t){
+ requestAnimationFrame(animate);
+ controls.update();
+ earth.rotation.y += .00055;
+ cloudShell.rotation.y += .0007;
+ nodeGroup.rotation.y += .00055;
+ satGroup.children.forEach((sat,i)=>{
+   const d=sat.userData;
+   const a=d.angle+t*.00012*(i+1);
+   sat.position.set(Math.cos(a)*d.radius,Math.sin(a*.7)*.25,Math.sin(a)*d.radius);
+   sat.lookAt(0,0,0);
+ });
+ showPin(loc().lat,loc().lon);
+ renderer.render(scene,camera);
+}
+animate(0);
+
+addEventListener('resize',()=>{
+ camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+ renderer.setSize(innerWidth,innerHeight);
+});
 </script>
-
-
-<!-- =====================================================
-     NON-3D JAVASCRIPT
-===================================================== -->
-
-<script>
-
-
-/* =========================================================
-   UTC CLOCK
-========================================================= */
-
-function updateUTC(){
-
-    const now =
-        new Date();
-
-    document
-        .getElementById('utc')
-        .textContent =
-        'UTC ' +
-        now.toISOString()
-        .slice(11,19);
-
-}
-
-updateUTC();
-
-setInterval(
-    updateUTC,
-    1000
-);
-
-
-/* =========================================================
-   SCENARIOS
-========================================================= */
-
-const scenarioData = {
-
-    seaice:{
-
-        name:
-            'Arctic sea-ice decline',
-
-        steps:[
-
-            [
-                'ASSIMILATION',
-                'Sea-ice extent + ocean-temperature observations'
-            ],
-
-            [
-                'PERTURBATION',
-                'Reduced surface albedo'
-            ],
-
-            [
-                'ATMOSPHERE',
-                'Regional energy balance changes'
-            ],
-
-            [
-                'OCEAN',
-                'Ocean-atmosphere heat exchange responds'
-            ],
-
-            [
-                'DOWNSTREAM',
-                'Atmospheric circulation may reorganise'
-            ],
-
-            [
-                'CONFIDENCE',
-                'Illustrative prototype — not a scientific forecast'
-            ]
-
-        ]
-
-    },
-
-
-    heat:{
-
-        name:
-            'Extreme warming',
-
-        steps:[
-
-            [
-                'ASSIMILATION',
-                'Temperature + radiation observations'
-            ],
-
-            [
-                'PERTURBATION',
-                'Positive temperature anomaly introduced'
-            ],
-
-            [
-                'LAND',
-                'Surface energy and soil moisture respond'
-            ],
-
-            [
-                'HYDROLOGY',
-                'Evaporative demand increases'
-            ],
-
-            [
-                'BIOSPHERE',
-                'Vegetation stress may increase'
-            ],
-
-            [
-                'CONFIDENCE',
-                'Illustrative prototype — not a scientific forecast'
-            ]
-
-        ]
-
-    },
-
-
-    volcano:{
-
-        name:
-            'Major volcanic eruption',
-
-        steps:[
-
-            [
-                'OBSERVATION',
-                'Aerosol plume detected'
-            ],
-
-            [
-                'ATMOSPHERE',
-                'Stratospheric transport activated'
-            ],
-
-            [
-                'CHEMISTRY',
-                'Aerosol-radiation interactions evaluated'
-            ],
-
-            [
-                'CLIMATE',
-                'Radiative forcing response estimated'
-            ],
-
-            [
-                'DOWNSTREAM',
-                'Surface temperature response evaluated'
-            ],
-
-            [
-                'CONFIDENCE',
-                'Illustrative prototype — not a scientific forecast'
-            ]
-
-        ]
-
-    },
-
-
-    drought:{
-
-        name:
-            'Severe drought',
-
-        steps:[
-
-            [
-                'ASSIMILATION',
-                'Precipitation + soil moisture anomaly'
-            ],
-
-            [
-                'LAND',
-                'Root-zone moisture declines'
-            ],
-
-            [
-                'BIOSPHERE',
-                'Vegetation stress increases'
-            ],
-
-            [
-                'ATMOSPHERE',
-                'Surface fluxes change'
-            ],
-
-            [
-                'FEEDBACK',
-                'Land-atmosphere coupling evaluated'
-            ],
-
-            [
-                'CONFIDENCE',
-                'Illustrative prototype — not a scientific forecast'
-            ]
-
-        ]
-
-    }
-
-};
-
-
-/* =========================================================
-   CHIPS
-========================================================= */
-
-document
-    .querySelectorAll('.chip')
-    .forEach(
-        chip=>{
-
-            chip.addEventListener(
-                'click',
-                ()=>{
-
-                    document
-                        .querySelectorAll('.chip')
-                        .forEach(
-                            c=>
-                            c.classList
-                            .remove('active')
-                        );
-
-                    chip.classList.add(
-                        'active'
-                    );
-
-                    document
-                        .getElementById(
-                            'scenarioInput'
-                        )
-                        .value =
-                        chip.textContent.trim();
-
-                    runScenario(
-                        chip.dataset.scenario
-                    );
-
-                }
-            );
-
-        }
-    );
-
-
-/* =========================================================
-   SCENARIO ENGINE
-========================================================= */
-
-window.runScenario =
-function(forcedKey=null){
-
-    const input =
-        document
-        .getElementById(
-            'scenarioInput'
-        )
-        .value
-        .trim();
-
-    const trace =
-        document
-        .getElementById(
-            'trace'
-        );
-
-    const status =
-        document
-        .getElementById(
-            'scenarioStatus'
-        );
-
-
-    trace.innerHTML = '';
-
-    status.textContent =
-        'INITIALISING';
-
-
-    let key =
-        forcedKey;
-
-
-    if(!key){
-
-        const lower =
-            input.toLowerCase();
-
-        if(
-            lower.includes('ice')
-        ){
-
-            key='seaice';
-
-        }
-        else if(
-            lower.includes('drought')
-        ){
-
-            key='drought';
-
-        }
-        else if(
-            lower.includes('volcan')
-        ){
-
-            key='volcano';
-
-        }
-        else if(
-            lower.includes('warm') ||
-            lower.includes('temperature')
-        ){
-
-            key='heat';
-
-        }
-
-    }
-
-
-    const data =
-        scenarioData[key];
-
-
-    if(!data){
-
-        trace.innerHTML = `
-
-            <div class="trace-row"
-                 style="opacity:1">
-
-                <span class="trace-key">
-                    INPUT
-                </span>
-
-                <span class="trace-value">
-                    Scenario received:
-                    ${input || 'No scenario entered'}
-                </span>
-
-            </div>
-
-            <div class="trace-row"
-                 style="opacity:1">
-
-                <span class="trace-key">
-                    ENGINE
-                </span>
-
-                <span class="trace-value">
-                    No scientific model is connected yet.
-                    This prototype would route the scenario
-                    into the appropriate physical models.
-                </span>
-
-            </div>
-
-        `;
-
-        status.textContent =
-            'PROTOTYPE';
-
-        return;
-
-    }
-
-
-    status.textContent =
-        'RUNNING';
-
-
-    data.steps.forEach(
-        (step,index)=>{
-
-            setTimeout(
-                ()=>{
-
-                    const row =
-                        document
-                        .createElement(
-                            'div'
-                        );
-
-                    row.className =
-                        'trace-row';
-
-                    row.style
-                        .animationDelay =
-                        '0s';
-
-                    row.innerHTML = `
-
-                        <span class="trace-key">
-                            ${step[0]}
-                        </span>
-
-                        <span class="trace-value">
-                            ${step[1]}
-                        </span>
-
-                    `;
-
-                    trace.appendChild(
-                        row
-                    );
-
-
-                    if(
-                        index ===
-                        data.steps.length-1
-                    ){
-
-                        status.textContent =
-                            'COMPLETE';
-
-                    }
-
-                },
-
-                index * 450
-
-            );
-
-        }
-
-    );
-
-};
-
-
-/* =========================================================
-   TIMELINE
-========================================================= */
-
-const slider =
-    document
-    .getElementById(
-        'yearSlider'
-    );
-
-const yearLabel =
-    document
-    .getElementById(
-        'yearLabel'
-    );
-
-
-slider.addEventListener(
-    'input',
-    ()=>{
-
-        yearLabel.textContent =
-            slider.value;
-
-    }
-);
-
-
-/* =========================================================
-   KEYBOARD SHORTCUTS
-========================================================= */
-
-document.addEventListener(
-    'keydown',
-    event=>{
-
-        if(
-            event.key.toLowerCase()
-            === 'r'
-        ){
-
-            resetEarth();
-
-        }
-
-    }
-);
-
-</script>
-
 </body>
 </html>
