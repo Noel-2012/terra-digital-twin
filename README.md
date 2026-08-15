@@ -1,72 +1,109 @@
-# TERRA — Planetary Digital Twin (Concept)
+# TERRA — Planetary Digital Twin
 
-A single-page concept UI exploring the idea from the "Earth-system digital twin" write-up: a
-software model that combines physics, satellites, and AI into one continuously self-correcting
-representation of Earth, instead of dozens of siloed domain models.
+> **An experimental 3D Earth-system digital twin interface connecting observations, physics, simulation and artificial intelligence.**
 
-**This is a design/UX concept, not a working scientific model.** There's no real satellite feed,
-no physics engine, no AI backend — the "simulation readouts" are scripted, illustrative text.
-The point is to make the *idea* (and the gap it's pointing at) tangible and explorable.
+![TERRA](https://img.shields.io/badge/TERRA-Earth--System%20Digital%20Twin-63d9ff)
+![Status](https://img.shields.io/badge/status-prototype-orange)
+![3D](https://img.shields.io/badge/3D-Three.js-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-## What's inside
+---
 
-- **Hero** — an animated cross-section diagram (space/satellites → atmosphere → ocean/land →
-  core) with orbiting nodes and pulsing "assimilation" threads, representing the convergence the
-  source material describes.
-- **System layers** — the compartmentalized models that exist today (ECMWF IFS, GraphCast, NEMO,
-  CLM, GEOS-Chem, etc.), each with a one-line note on where it fits and its limits.
-- **Scenario console** — pick or type a "what happens if X" scenario and get a scripted,
-  clearly-labeled illustrative trace across atmosphere/ocean/land coupling.
-- **Frontier ranking** — the five-tier ranking from the source material, most-mature to
-  most-speculative.
+## Overview
 
-## Run it locally
+TERRA is an experimental software platform exploring the concept of a planetary digital twin.
 
-It's a single static HTML file — no build step, no dependencies.
+The central idea is to represent Earth as a connected system rather than as a collection of isolated scientific models.
 
-```bash
-open index.html        # macOS
-xdg-open index.html    # Linux
-start index.html       # Windows
-```
+TERRA is designed around the convergence of:
 
-Or serve it:
+- Earth observations
+- Satellite observations
+- Numerical physics models
+- Reanalysis datasets
+- Earth-system simulations
+- Artificial intelligence
+- Data assimilation
+- Uncertainty analysis
+- Interactive 3D visualisation
 
-```bash
-python3 -m http.server 8000
-# then visit http://localhost:8000
-```
+The current version is a **3D software prototype**.
 
-## Push to your GitHub
+It is not yet a complete scientific digital twin and does not currently produce operational scientific forecasts.
 
-I don't have write access to your GitHub account, so create the repo yourself and push this
-folder:
+---
 
-```bash
-cd terra-digital-twin
-git init
-git add .
-git commit -m "feat: initial TERRA digital twin concept"
-git branch -M main
-git remote add origin https://github.com/<your-username>/terra-digital-twin.git
-git push -u origin main
-```
+# Current Version
 
-(Create the empty repo on GitHub first — via the web UI, or `gh repo create terra-digital-twin
---public --source=. --remote=origin` if you have the GitHub CLI installed.)
+## TERRA v2 — Interactive 3D Prototype
 
-### Free hosting once it's pushed
+The current version introduces an interactive three-dimensional Earth environment.
 
-GitHub Pages works well for this since it's static:
-Settings → Pages → Deploy from branch → `main` / `/ (root)`.
+The previous version used a conceptual 2D/SVG representation of the Earth system.
 
-## Credits / real-world references
+TERRA v2 replaces that representation with a WebGL-based 3D Earth.
 
-The layers and ranking are drawn from real, ongoing efforts referenced in the source material:
+### Current capabilities
 
-- **Destination Earth (DestinE)** — ECMWF, ESA, EUMETSAT
-- **NVIDIA Earth-2**
-- **Google DeepMind GraphCast / GenCast**
-- **ESA Digital Twin Earth**
+- Interactive 3D Earth
+- Earth rotation
+- Camera orbit controls
+- Zoom
+- Satellite objects
+- Atmospheric shell
+- Observation points
+- Wind-particle visualisation
+- Ocean layer
+- Star field
+- Sun/light source
+- Earth-system HUD
+- Observation-layer controls
+- Scenario console
+- Model comparison interface
+- AI analysis interface
+- Temporal slider
+- Responsive interface
+- Reduced-motion accessibility support
 
-None of their data or branding is used here — this is an independent concept design.
+---
+
+# Architecture
+
+The long-term TERRA architecture is designed around five major layers.
+
+```text
+                         TERRA
+                           │
+                           ▼
+                 ┌───────────────────┐
+                 │   3D INTERFACE    │
+                 │    Earth State    │
+                 └─────────┬─────────┘
+                           │
+                           ▼
+                 ┌───────────────────┐
+                 │   EARTH STATE     │
+                 │   DATA LAYER      │
+                 └─────────┬─────────┘
+                           │
+             ┌─────────────┼─────────────┐
+             │             │             │
+             ▼             ▼             ▼
+        Observations    Reanalysis     Models
+             │             │             │
+             └─────────────┼─────────────┘
+                           │
+                           ▼
+                 ┌───────────────────┐
+                 │ DATA ASSIMILATION │
+                 └─────────┬─────────┘
+                           │
+                           ▼
+                 ┌───────────────────┐
+                 │ AI / INTELLIGENCE │
+                 └─────────┬─────────┘
+                           │
+                           ▼
+                 ┌───────────────────┐
+                 │ SCENARIO ENGINE   │
+                 └───────────────────┘
