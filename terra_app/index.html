@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>
+    TERRA — Planetary Digital Twin
+</title>
+
+
+<!-- =======================================================
+     LEAFLET
+======================================================= -->
+
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"
+/>
+
+
+<style>
+
+/* ==========================================================
+   GLOBAL
+========================================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100%;
+    font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    background:
+        #07111f;
+
+    color:
+        #e5edf7;
+}
+
+
+/* ==========================================================
+   HEADER
+========================================================== */
+
+header {
+
+    height: 72px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    padding:
+        0 28px;
+
+    border-bottom:
+        1px solid
+        rgba(255,255,255,0.08);
+
+    background:
+        rgba(4,10,18,0.96);
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 1000;
+}
+
+
+.logo {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+}
+
+
+.logo-mark {
+
+    width: 38px;
+
+    height: 38px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle at 35% 30%,
+            #55d6ff,
+            #1769aa 45%,
+            #062c52 75%
+        );
+
+    box-shadow:
+        0 0 24px
+        rgba(44,173,255,0.4);
+}
+
+
+.logo-text {
+
+    font-size: 20px;
+
+    font-weight: 800;
+
+    letter-spacing:
+        0.04em;
+}
+
+
+.logo-subtitle {
+
+    font-size: 11px;
+
+    color:
+        #8fa4ba;
+
+    margin-top: 2px;
+}
+
+
+.status {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    font-size: 12px;
+
+    color:
+        #a8bacd;
+}
+
+
+.status-dot {
+
+    width: 8px;
+
+    height: 8px;
+
+    border-radius: 50%;
+
+    background:
+        #36d399;
+
+    box-shadow:
+        0 0 10px
+        rgba(54,211,153,0.7);
+}
+
+
+/* ==========================================================
+   LAYOUT
+========================================================== */
+
+.app {
+
+    display: grid;
+
+    grid-template-columns:
+        350px
+        minmax(0, 1fr);
+
+    min-height:
+        calc(100vh - 72px);
+}
+
+
+/* ==========================================================
+   SIDEBAR
+========================================================== */
+
+.sidebar {
+
+    padding: 22px;
+
+    border-right:
+        1px solid
+        rgba(255,255,255,0.08);
+
+    background:
+        #091522;
+
+    overflow-y: auto;
+}
+
+
+.section {
+
+    margin-bottom: 24px;
+}
+
+
+.section-title {
+
+    font-size: 11px;
+
+    text-transform: uppercase;
+
+    letter-spacing:
+        0.12em;
+
+    color:
+        #7890a8;
+
+    font-weight: 700;
+
+    margin-bottom: 10px;
+}
+
+
+label {
+
+    display: block;
+
+    font-size: 12px;
+
+    color:
+        #a9b9ca;
+
+    margin-bottom: 6px;
+}
+
+
+input,
+select {
+
+    width: 100%;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.1);
+
+    background:
+        #101e2c;
+
+    color:
+        #e9f1f8;
+
+    border-radius:
+        9px;
+
+    padding:
+        11px 12px;
+
+    outline: none;
+
+    margin-bottom: 12px;
+}
+
+
+input:focus,
+select:focus {
+
+    border-color:
+        #2589d8;
+
+    box-shadow:
+        0 0 0 2px
+        rgba(37,137,216,0.15);
+}
+
+
+button {
+
+    width: 100%;
+
+    border: none;
+
+    border-radius: 9px;
+
+    padding: 12px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    color: white;
+
+    background:
+        linear-gradient(
+            135deg,
+            #1769aa,
+            #2589d8
+        );
+
+    margin-top: 4px;
+}
+
+
+button:hover {
+
+    filter:
+        brightness(1.12);
+}
+
+
+button.secondary {
+
+    background:
+        #132334;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.08);
+}
+
+
+/* ==========================================================
+   FILE BOX
+========================================================== */
+
+.upload-box {
+
+    border:
+        1px dashed
+        rgba(100,180,240,0.35);
+
+    background:
+        rgba(30,100,150,0.08);
+
+    border-radius:
+        12px;
+
+    padding:
+        16px;
+
+    margin-bottom:
+        10px;
+}
+
+
+.dataset-summary {
+
+    font-size:
+        12px;
+
+    line-height:
+        1.6;
+
+    color:
+        #9fb2c5;
+
+    background:
+        rgba(255,255,255,0.025);
+
+    padding:
+        12px;
+
+    border-radius:
+        9px;
+}
+
+
+/* ==========================================================
+   SEARCH CRITERIA (place search / coords / date range)
+========================================================== */
+
+.search-row {
+
+    display: flex;
+
+    gap: 8px;
+}
+
+.search-row input {
+
+    flex: 1;
+
+    margin-bottom: 0;
+}
+
+.search-btn {
+
+    width: auto;
+
+    padding: 11px 16px;
+
+    margin-top: 0;
+
+    white-space: nowrap;
+}
+
+.place-results {
+
+    margin-top: 8px;
+}
+
+.place-results:empty {
+
+    margin-top: 0;
+}
+
+.place-result-item {
+
+    font-size: 12px;
+
+    line-height: 1.4;
+
+    color: #cfe0f0;
+
+    padding: 9px 10px;
+
+    border: 1px solid rgba(255,255,255,0.07);
+
+    border-radius: 8px;
+
+    margin-bottom: 6px;
+
+    cursor: pointer;
+
+    background: rgba(255,255,255,0.02);
+}
+
+.place-result-item:hover {
+
+    background: rgba(37,137,216,0.15);
+
+    border-color: rgba(80,170,240,0.35);
+}
+
+.coord-fields {
+
+    margin-bottom: 4px;
+}
+
+.coord-fields.hidden {
+
+    display: none;
+}
+
+.coord-grid-2 {
+
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 10px;
+}
+
+.coord-grid-2 input {
+
+    margin-bottom: 10px;
+}
+
+.leaflet-draw-toolbar a {
+
+    background-color: #101e2c !important;
+}
+
+
+/* ==========================================================
+   MAIN
+========================================================== */
+
+.main {
+
+    padding:
+        20px;
+
+    display:
+        grid;
+
+    grid-template-rows:
+        minmax(420px, 55vh)
+        auto;
+
+    gap:
+        20px;
+}
+
+
+/* ==========================================================
+   MAP
+========================================================== */
+
+.map-panel {
+
+    position: relative;
+
+    min-height:
+        420px;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.1);
+
+    border-radius:
+        14px;
+
+    overflow:
+        hidden;
+
+    background:
+        #0a1623;
+
+    box-shadow:
+        0 12px 40px
+        rgba(0,0,0,0.25);
+}
+
+
+#terraMap {
+
+    width: 100%;
+
+    height: 100%;
+
+    min-height:
+        420px;
+}
+
+
+.map-overlay {
+
+    position: absolute;
+
+    top: 15px;
+
+    left: 15px;
+
+    z-index: 500;
+
+    background:
+        rgba(5,12,21,0.9);
+
+    backdrop-filter:
+        blur(10px);
+
+    border:
+        1px solid
+        rgba(255,255,255,0.1);
+
+    border-radius:
+        10px;
+
+    padding:
+        11px 14px;
+}
+
+
+.map-title {
+
+    font-size:
+        14px;
+
+    font-weight:
+        800;
+}
+
+
+.map-subtitle {
+
+    font-size:
+        11px;
+
+    color:
+        #8ea4b8;
+
+    margin-top:
+        3px;
+}
+
+
+/* ==========================================================
+   RESULTS
+========================================================== */
+
+.results-panel {
+
+    border:
+        1px solid
+        rgba(255,255,255,0.08);
+
+    border-radius:
+        14px;
+
+    padding:
+        20px;
+
+    background:
+        #091522;
+}
+
+
+.results-header {
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        center;
+
+    margin-bottom:
+        14px;
+}
+
+
+.results-title {
+
+    font-size:
+        16px;
+
+    font-weight:
+        800;
+}
+
+
+#terraStatus {
+
+    font-size:
+        12px;
+
+    color:
+        #8fa7bc;
+}
+
+
+.result-card {
+
+    background:
+        rgba(255,255,255,0.025);
+
+    border:
+        1px solid
+        rgba(255,255,255,0.07);
+
+    border-radius:
+        11px;
+
+    padding:
+        16px;
+
+    margin-bottom:
+        12px;
+}
+
+
+.result-card h3 {
+
+    margin-top:
+        0;
+
+    font-size:
+        14px;
+}
+
+
+.download-row {
+
+    display:
+        flex;
+
+    flex-wrap:
+        wrap;
+
+    gap:
+        8px;
+}
+
+
+.download-button {
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    padding:
+        9px 13px;
+
+    border-radius:
+        8px;
+
+    background:
+        #132c42;
+
+    border:
+        1px solid
+        rgba(80,170,240,0.25);
+
+    color:
+        #cceaff;
+
+    text-decoration:
+        none;
+
+    font-size:
+        12px;
+
+    font-weight:
+        700;
+}
+
+
+.download-button:hover {
+
+    background:
+        #19405e;
+}
+
+
+/* ==========================================================
+   FOOTER
+========================================================== */
+
+footer {
+
+    padding:
+        18px 24px;
+
+    color:
+        #6f8498;
+
+    font-size:
+        11px;
+
+    border-top:
+        1px solid
+        rgba(255,255,255,0.06);
+
+    text-align:
+        center;
+}
+
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media (
+    max-width: 900px
+) {
+
+    .app {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .sidebar {
+
+        border-right:
+            none;
+
+        border-bottom:
+            1px solid
+            rgba(255,255,255,0.08);
+    }
+
+
+    .main {
+
+        grid-template-rows:
+            500px
+            auto;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- ========================================================
+     HEADER
+======================================================== -->
+
+<header>
+
+    <div class="logo">
+
+        <div class="logo-mark"></div>
+
+        <div>
+
+            <div class="logo-text">
+                TERRA
+            </div>
+
+            <div class="logo-subtitle">
+                Planetary Earth-System Digital Twin
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="status">
+
+        <span class="status-dot"></span>
+
+        TERRA Scientific Engine Online
+
+    </div>
+
+</header>
+
+
+<!-- ========================================================
+     APPLICATION
+======================================================== -->
+
+<div class="app">
+
+
+<!-- ========================================================
+     SIDEBAR
+======================================================== -->
+
+<aside class="sidebar">
+
+
+    <!-- DATA -->
+
+    <div class="section">
+
+        <div class="section-title">
+            01 — Dataset
+        </div>
+
+
+        <div class="upload-box">
+
+            <label>
+                Upload scientific dataset
+            </label>
+
+            <input
+                id="terraFile"
+                type="file"
+                accept=".nc,.netcdf,.csv,.xlsx,.xls"
+            >
+
+            <div
+                id="datasetSummary"
+                class="dataset-summary"
+            >
+                No dataset loaded.
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- VARIABLE -->
+
+    <div class="section">
+
+        <div class="section-title">
+            02 — Variable
+        </div>
+
+
+        <label>
+            Scientific variable
+        </label>
+
+        <select
+            id="variableSelect"
+        >
+
+            <option>
+                Upload a dataset first
+            </option>
+
+        </select>
+
+
+        <label>
+            Output unit
+        </label>
+
+        <select
+            id="unitSelect"
+        >
+
+            <option value="native">
+                Native dataset units
+            </option>
+
+            <option value="celsius">
+                Degrees Celsius (°C)
+            </option>
+
+            <option value="kelvin">
+                Kelvin (K)
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <!-- ANALYSIS -->
+
+    <div class="section">
+
+        <div class="section-title">
+            03 — Scientific analysis
+        </div>
+
+
+        <label>
+            Analysis
+        </label>
+
+        <select
+            id="analysisSelect"
+        >
+
+            <option value="map">
+                Scientific Map
+            </option>
+
+            <option value="timeseries">
+                Time Series
+            </option>
+
+            <option value="seasonal">
+                Seasonal Climatology
+            </option>
+
+            <option value="anomaly">
+                Anomaly Map
+            </option>
+
+            <option value="statistics">
+                Statistics
+            </option>
+
+            <option value="trend">
+                Trend Analysis
+            </option>
+
+            <option value="percentile">
+                Percentile
+            </option>
+
+            <option value="som">
+                Self-Organising Map (SOM)
+            </option>
+
+        </select>
+
+
+        <label>
+            Figure title
+        </label>
+
+        <input
+            id="titleInput"
+            type="text"
+            placeholder="TERRA scientific analysis"
+        >
+
+
+        <button
+            id="analyseButton"
+        >
+            Run Scientific Analysis
+        </button>
+
+    </div>
+
+
+    <!-- PLACE SEARCH -->
+
+    <div class="section">
+
+        <div class="section-title">
+            04 — Search Criteria
+        </div>
+
+        <label>
+            Address / place name
+        </label>
+
+        <div class="search-row">
+
+            <input
+                id="placeSearchInput"
+                type="text"
+                placeholder="e.g. Cape Town, South Africa"
+                autocomplete="off"
+            >
+
+            <button
+                id="placeSearchButton"
+                class="secondary search-btn"
+                type="button"
+            >
+                Search
+            </button>
+
+        </div>
+
+        <div
+            id="placeResults"
+            class="place-results"
+        ></div>
+
+
+        <label style="margin-top:4px;">
+            Selection method
+        </label>
+
+        <select id="selectionMethod">
+
+            <option value="none">
+                None (use full dataset extent)
+            </option>
+
+            <option value="point">
+                Point (lat / lon)
+            </option>
+
+            <option value="bbox">
+                Rectangle (bounding box)
+            </option>
+
+            <option value="polygon">
+                Polygon (draw on map)
+            </option>
+
+        </select>
+
+
+        <!-- POINT FIELDS -->
+        <div id="pointFields" class="coord-fields hidden">
+
+            <div class="coord-grid-2">
+                <div>
+                    <label>Latitude</label>
+                    <input id="pointLat" type="number" step="any" placeholder="-33.92">
+                </div>
+                <div>
+                    <label>Longitude</label>
+                    <input id="pointLon" type="number" step="any" placeholder="18.42">
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- BBOX FIELDS -->
+        <div id="bboxFields" class="coord-fields hidden">
+
+            <div class="coord-grid-2">
+                <div>
+                    <label>Min latitude</label>
+                    <input id="bboxMinLat" type="number" step="any">
+                </div>
+                <div>
+                    <label>Max latitude</label>
+                    <input id="bboxMaxLat" type="number" step="any">
+                </div>
+                <div>
+                    <label>Min longitude</label>
+                    <input id="bboxMinLon" type="number" step="any">
+                </div>
+                <div>
+                    <label>Max longitude</label>
+                    <input id="bboxMaxLon" type="number" step="any">
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- POLYGON HINT -->
+        <div id="polygonFields" class="coord-fields hidden">
+
+            <p style="font-size:12px;line-height:1.6;color:#8198ad;margin:0 0 10px;">
+                Use the polygon draw tool in the
+                top-right of the map to trace an
+                area of interest.
+            </p>
+
+        </div>
+
+
+        <div
+            id="selectionSummary"
+            class="dataset-summary"
+            style="margin-top:4px;"
+        >
+            No coordinates selected.
+        </div>
+
+
+        <label style="margin-top:14px;">
+            Date range
+        </label>
+
+        <div class="coord-grid-2">
+            <div>
+                <label style="margin-bottom:4px;">From</label>
+                <input id="startDate" type="date">
+            </div>
+            <div>
+                <label style="margin-bottom:4px;">To</label>
+                <input id="endDate" type="date">
+            </div>
+        </div>
+
+
+        <button
+            id="clearSelection"
+            class="secondary"
+            style="margin-top:6px;"
+        >
+            Clear Selection
+        </button>
+
+    </div>
+
+
+</aside>
+
+
+<!-- ========================================================
+     MAIN
+======================================================== -->
+
+<main class="main">
+
+
+    <section class="map-panel">
+
+        <div class="map-overlay">
+
+            <div class="map-title">
+                TERRA Earth Observation Workspace
+            </div>
+
+            <div class="map-subtitle">
+                Interactive geographic analysis environment
+            </div>
+
+        </div>
+
+
+        <div id="terraMap"></div>
+
+    </section>
+
+
+    <section class="results-panel">
+
+        <div class="results-header">
+
+            <div class="results-title">
+                Scientific Results
+            </div>
+
+            <div id="terraStatus">
+                Ready
+            </div>
+
+        </div>
+
+
+        <div id="results">
+
+            <div class="result-card">
+
+                Upload a NetCDF, CSV or Excel
+                dataset to begin scientific analysis.
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+</div>
+
+
+<footer>
+
+    TERRA — Planetary Earth-System Digital Twin
+    · Scientific research platform
+
+</footer>
+
+
+<!-- ========================================================
+     LEAFLET
+======================================================== -->
+
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+></script>
+
+<script
+    src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"
+></script>
+
+
+<!-- ========================================================
+     TERRA JAVASCRIPT
+======================================================== -->
+
+<script
+    src="/frontend/terra-v9.js"
+></script>
+
+
+</body>
+
+</html>

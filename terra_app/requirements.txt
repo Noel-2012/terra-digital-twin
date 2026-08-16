@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+python-multipart
+httpx
+shapely
+numpy
+pandas
+xarray
+netcdf4
+scipy
+scikit-learn
+matplotlib
+cartopy
+minisom
+openpyxl
+h5netcdf
