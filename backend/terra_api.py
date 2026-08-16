@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
-import os
-import tempfile
+import shutil
+import uuid
 from pathlib import Path
 from typing import Optional
 
@@ -13,7 +13,6 @@ from fastapi import (
     HTTPException,
     UploadFile,
 )
-
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
@@ -28,22 +27,27 @@ from backend.terra_scientific_engine import (
     anomaly_map,
     train_som,
     dataset_summary,
+    get_series,
+    calculate_statistics,
+    trend_statistics,
 )
 
+from backend.terra_outputs import (
+    publication_time_series,
+    heatmap,
+    create_pdf_report,
+    save_json,
+    save_dataframe_csv,
+)
 
-# ============================================================
-# APP
-# ============================================================
 
 app = FastAPI(
     title="TERRA Scientific API",
     description=(
-        "Scientific backend for the TERRA Planetary Digital Twin. "
-        "Provides Earth-system data processing, mapping, "
-        "time-series analysis, anomalies, seasonal analysis "
-        "and SOM analysis."
+        "TERRA Planetary Digital Twin scientific "
+        "analysis backend."
     ),
-    version="8.1.0",
+    version="8.2.0",
 )
 
 
@@ -56,11 +60,9 @@ app.add_middleware(
 )
 
 
-# ============================================================
-# DIRECTORIES
-# ============================================================
-
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(
+    __file__
+).resolve().parent.parent
 
 DATA_DIR = BASE_DIR / "data"
 OUTPUT_DIR = BASE_DIR / "outputs"
@@ -74,9 +76,55 @@ OUTPUT_DIR.mkdir(
 )
 
 
-# ============================================================
-# ROOT
-# ============================================================
+VARIABLE_GROUPS = {
+    "Atmosphere": [
+        "temperature",
+        "pressure",
+        "humidity",
+        "wind_speed",
+        "wind_u",
+        "wind_v",
+        "precipitation",
+    ],
+    "Air quality": [
+        "pm25",
+        "pm10",
+        "ozone",
+        "no2",
+        "so2",
+        "co",
+        "aerosol",
+    ],
+    "Trace gases": [
+        "mercury",
+        "co2",
+        "ch4",
+    ],
+    "Land / biosphere": [
+        "ndvi",
+        "soil_moisture",
+        "lst",
+    ],
+    "Ocean": [
+        "sst",
+        "salinity",
+        "sea_level",
+        "currents",
+    ],
+}
+
+
+ANALYSES = [
+    "map",
+    "timeseries",
+    "seasonal",
+    "anomaly",
+    "statistics",
+    "trend",
+    "percentile",
+    "som",
+]
+
 
 @app.get("/")
 def root():
@@ -84,15 +132,11 @@ def root():
     return {
         "name": "TERRA",
         "system": "Planetary Digital Twin",
-        "version": "8.1.0",
+        "version": "8.2.0",
         "status": "online",
         "docs": "/docs",
     }
 
-
-# ============================================================
-# HEALTH
-# ============================================================
 
 @app.get("/health")
 def health():
@@ -100,41 +144,95 @@ def health():
     return {
         "status": "ok",
         "engine": "TERRA Scientific Engine",
-        "version": "8.1.0",
+        "version": "8.2.0",
     }
 
 
-# ============================================================
-# DATASET SUMMARY
-# ============================================================
+@app.get("/capabilities")
+def capabilities():
 
-@app.post("/dataset/summary")
-async def dataset_info(
-    file: UploadFile = File(...)
+    return {
+        "version": "8.2.0",
+        "variable_groups": VARIABLE_GROUPS,
+        "analyses": ANALYSES,
+        "formats": [
+            "NetCDF",
+            "CSV",
+        ],
+        "outputs": [
+            "PNG",
+            "SVG",
+            "PDF",
+            "CSV",
+            "JSON",
+        ],
+        "forecast": {
+            "hourly": True,
+            "24_hour": True,
+            "multi_day": True,
+            "ai_model": False,
+            "status": (
+                "adapter architecture only"
+            ),
+        },
+    }
+
+
+async def save_upload(
+    file: UploadFile,
+    prefix: str,
 ):
 
     suffix = Path(
-        file.filename
-    ).suffix
+        file.filename or ""
+    ).suffix.lower()
 
-    temp_path = (
-        DATA_DIR /
-        f"uploaded{suffix}"
+    if suffix not in [
+        ".nc",
+        ".nc4",
+        ".netcdf",
+        ".csv",
+    ]:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Only NetCDF and CSV "
+                "files are supported."
+            ),
+        )
+
+    filename = (
+        f"{prefix}_"
+        f"{uuid.uuid4().hex}"
+        f"{suffix}"
     )
 
-    content = await file.read()
+    path = DATA_DIR / filename
 
-    temp_path.write_bytes(
-        content
+    with path.open("wb") as buffer:
+        shutil.copyfileobj(
+            file.file,
+            buffer,
+        )
+
+    return path
+
+
+@app.post("/dataset/summary")
+async def dataset_info(
+    file: UploadFile = File(...),
+):
+
+    path = await save_upload(
+        file,
+        "summary",
     )
 
     try:
 
-        result = dataset_summary(
-            str(temp_path)
+        return dataset_summary(
+            str(path)
         )
-
-        return result
 
     except Exception as exc:
 
@@ -144,41 +242,41 @@ async def dataset_info(
         )
 
 
-# ============================================================
-# ANALYSIS
-# ============================================================
-
 @app.post("/analysis/run")
 async def run_analysis(
+
     file: UploadFile = File(...),
+
     variable: str = Form(""),
+
     analysis: str = Form("map"),
+
     latitude: Optional[float] = Form(None),
+
     longitude: Optional[float] = Form(None),
+
     lat_min: Optional[float] = Form(None),
+
     lat_max: Optional[float] = Form(None),
+
     lon_min: Optional[float] = Form(None),
+
     lon_max: Optional[float] = Form(None),
+
     unit: Optional[str] = Form(None),
 ):
 
-    suffix = Path(
-        file.filename
-    ).suffix
-
-    temp_path = (
-        DATA_DIR /
-        f"analysis_input{suffix}"
+    path = await save_upload(
+        file,
+        "analysis",
     )
 
-    temp_path.write_bytes(
-        await file.read()
-    )
+    job_id = uuid.uuid4().hex[:12]
 
     try:
 
         ds = open_data(
-            str(temp_path)
+            str(path)
         )
 
         actual_variable = detect_variable(
@@ -186,11 +284,10 @@ async def run_analysis(
             variable or None,
         )
 
-        # ----------------------------------------------------
-        # XARRAY VARIABLE
-        # ----------------------------------------------------
-
-        if hasattr(ds, "data_vars"):
+        if hasattr(
+            ds,
+            "data_vars",
+        ):
 
             field = ds[
                 actual_variable
@@ -203,8 +300,8 @@ async def run_analysis(
             )
 
             if any(
-                x is not None
-                for x in [
+                value is not None
+                for value in [
                     lat_min,
                     lat_max,
                     lon_min,
@@ -230,53 +327,259 @@ async def run_analysis(
                 actual_variable
             ]
 
-        # ----------------------------------------------------
-        # OUTPUT
-        # ----------------------------------------------------
+        outputs = []
 
-        output_name = (
-            f"terra_{analysis}_"
-            f"{actual_variable}.png"
-        )
-
-        output_path = (
-            OUTPUT_DIR /
-            output_name
+        base = (
+            f"terra_{job_id}_"
+            f"{actual_variable}"
         )
 
         if analysis == "map":
 
+            output = (
+                OUTPUT_DIR /
+                f"{base}_map.png"
+            )
+
             scientific_map(
                 field,
                 actual_variable,
-                str(output_path),
+                str(output),
+            )
+
+            outputs.append(
+                output.name
             )
 
         elif analysis == "seasonal":
 
+            output = (
+                OUTPUT_DIR /
+                f"{base}_seasonal.png"
+            )
+
             seasonal_map(
                 field,
                 actual_variable,
-                str(output_path),
+                str(output),
+            )
+
+            outputs.append(
+                output.name
             )
 
         elif analysis == "anomaly":
 
+            output = (
+                OUTPUT_DIR /
+                f"{base}_anomaly.png"
+            )
+
             anomaly_map(
                 field,
                 actual_variable,
-                str(output_path),
+                str(output),
+            )
+
+            outputs.append(
+                output.name
             )
 
         elif analysis == "timeseries":
 
-            time_series(
+            output = (
+                OUTPUT_DIR /
+                f"{base}_timeseries.png"
+            )
+
+            result = time_series(
                 field,
                 actual_variable,
-                str(output_path),
+                str(output),
                 latitude,
                 longitude,
             )
+
+            outputs.append(
+                output.name
+            )
+
+            series = get_series(
+                field,
+                latitude,
+                longitude,
+            )
+
+            svg = (
+                OUTPUT_DIR /
+                f"{base}_timeseries.svg"
+            )
+
+            publication_time_series(
+                series,
+                actual_variable,
+                str(
+                    field.attrs.get(
+                        "units",
+                        "",
+                    )
+                ),
+                output_svg=str(svg),
+            )
+
+            outputs.append(
+                svg.name
+            )
+
+        elif analysis == "statistics":
+
+            series = get_series(
+                field,
+                latitude,
+                longitude,
+            )
+
+            statistics = (
+                calculate_statistics(
+                    series
+                )
+            )
+
+            json_path = (
+                OUTPUT_DIR /
+                f"{base}_statistics.json"
+            )
+
+            save_json(
+                statistics,
+                str(json_path),
+            )
+
+            outputs.append(
+                json_path.name
+            )
+
+            return {
+                "status": "success",
+                "job_id": job_id,
+                "analysis": analysis,
+                "variable": actual_variable,
+                "statistics": statistics,
+                "outputs": outputs,
+            }
+
+        elif analysis == "trend":
+
+            series = get_series(
+                field,
+                latitude,
+                longitude,
+            )
+
+            trend = trend_statistics(
+                series
+            )
+
+            json_path = (
+                OUTPUT_DIR /
+                f"{base}_trend.json"
+            )
+
+            save_json(
+                trend,
+                str(json_path),
+            )
+
+            outputs.append(
+                json_path.name
+            )
+
+            return {
+                "status": "success",
+                "job_id": job_id,
+                "analysis": analysis,
+                "variable": actual_variable,
+                "trend": trend,
+                "outputs": outputs,
+            }
+
+        elif analysis == "percentile":
+
+            series = get_series(
+                field,
+                latitude,
+                longitude,
+            )
+
+            values = series.values
+
+            result = {
+                "p01": float(
+                    np.percentile(
+                        values,
+                        1,
+                    )
+                ),
+                "p05": float(
+                    np.percentile(
+                        values,
+                        5,
+                    )
+                ),
+                "p10": float(
+                    np.percentile(
+                        values,
+                        10,
+                    )
+                ),
+                "p50": float(
+                    np.percentile(
+                        values,
+                        50,
+                    )
+                ),
+                "p90": float(
+                    np.percentile(
+                        values,
+                        90,
+                    )
+                ),
+                "p95": float(
+                    np.percentile(
+                        values,
+                        95,
+                    )
+                ),
+                "p99": float(
+                    np.percentile(
+                        values,
+                        99,
+                    )
+                ),
+            }
+
+            json_path = (
+                OUTPUT_DIR /
+                f"{base}_percentiles.json"
+            )
+
+            save_json(
+                result,
+                str(json_path),
+            )
+
+            outputs.append(
+                json_path.name
+            )
+
+            return {
+                "status": "success",
+                "job_id": job_id,
+                "analysis": analysis,
+                "variable": actual_variable,
+                "percentiles": result,
+                "outputs": outputs,
+            }
 
         elif analysis == "som":
 
@@ -284,26 +587,70 @@ async def run_analysis(
                 field
             )
 
+            json_path = (
+                OUTPUT_DIR /
+                f"{base}_som.json"
+            )
+
+            save_json(
+                result,
+                str(json_path),
+            )
+
+            outputs.append(
+                json_path.name
+            )
+
             return {
                 "status": "success",
-                "analysis": "som",
+                "job_id": job_id,
+                "analysis": analysis,
                 "variable": actual_variable,
                 "result": result,
+                "outputs": outputs,
             }
 
         else:
 
             raise ValueError(
-                f"Unknown analysis: {analysis}"
+                f"Unknown analysis: "
+                f"{analysis}"
             )
+
+        metadata = {
+            "TERRA version": "8.2.0",
+            "Job": job_id,
+            "Variable": actual_variable,
+            "Analysis": analysis,
+            "Latitude": latitude,
+            "Longitude": longitude,
+            "Source": (
+                "User-uploaded dataset"
+            ),
+        }
+
+        metadata_path = (
+            OUTPUT_DIR /
+            f"{base}_metadata.json"
+        )
+
+        save_json(
+            metadata,
+            str(metadata_path),
+        )
+
+        outputs.append(
+            metadata_path.name
+        )
 
         return {
             "status": "success",
+            "job_id": job_id,
             "analysis": analysis,
             "variable": actual_variable,
-            "output": (
-                f"/outputs/{output_name}"
-            ),
+            "outputs": outputs,
+            "download_base": "/outputs/",
+            "metadata": metadata,
         }
 
     except Exception as exc:
@@ -314,18 +661,16 @@ async def run_analysis(
         )
 
 
-# ============================================================
-# OUTPUT FILE
-# ============================================================
-
-@app.get("/outputs/{filename}")
+@app.get(
+    "/outputs/{filename}"
+)
 def output_file(
-    filename: str
+    filename: str,
 ):
 
     path = (
         OUTPUT_DIR /
-        filename
+        Path(filename).name
     )
 
     if not path.exists():

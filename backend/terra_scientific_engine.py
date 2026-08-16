@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-import io
-import json
-import math
-import tempfile
 from pathlib import Path
 from typing import Optional
 
@@ -19,124 +15,204 @@ import matplotlib.pyplot as plt
 try:
     import cartopy.crs as ccrs
     import cartopy.feature as cfeature
+
     CARTOPY_AVAILABLE = True
 except Exception:
     CARTOPY_AVAILABLE = False
 
 try:
     from minisom import MiniSom
+
     MINISOM_AVAILABLE = True
 except Exception:
     MINISOM_AVAILABLE = False
 
 
-# ============================================================
-# TERRA SCIENTIFIC ENGINE
-# ============================================================
-
 VARIABLE_ALIASES = {
-    "temperature": ["t2m", "temperature", "temp", "tas", "tasmax"],
-    "pressure": ["msl", "mslp", "sp", "pressure", "slp"],
-    "humidity": ["rh", "relative_humidity", "r", "humidity"],
-    "wind_speed": ["wind_speed", "ws", "windspeed"],
-    "wind_u": ["u10", "u", "u_component_of_wind"],
-    "wind_v": ["v10", "v", "v_component_of_wind"],
-    "precipitation": ["tp", "precipitation", "rainfall", "precip"],
-    "pm25": ["pm25", "pm2_5", "pm2.5"],
+    "temperature": [
+        "t2m",
+        "temperature",
+        "temp",
+        "tas",
+        "tasmax",
+        "tasmin",
+    ],
+    "pressure": [
+        "msl",
+        "mslp",
+        "sp",
+        "pressure",
+        "slp",
+    ],
+    "humidity": [
+        "rh",
+        "relative_humidity",
+        "r",
+        "humidity",
+    ],
+    "wind_speed": [
+        "wind_speed",
+        "windspeed",
+        "ws",
+    ],
+    "wind_u": [
+        "u10",
+        "u",
+        "u_component_of_wind",
+    ],
+    "wind_v": [
+        "v10",
+        "v",
+        "v_component_of_wind",
+    ],
+    "precipitation": [
+        "tp",
+        "precipitation",
+        "rainfall",
+        "precip",
+    ],
+    "pm25": [
+        "pm25",
+        "pm2_5",
+        "pm2.5",
+    ],
     "pm10": ["pm10"],
     "ozone": ["o3", "ozone"],
     "no2": ["no2"],
     "so2": ["so2"],
     "co": ["co"],
-    "mercury": ["hg", "mercury", "gem", "hg0", "hg0_gem"],
+    "mercury": [
+        "hg",
+        "mercury",
+        "gem",
+        "hg0",
+        "hg0_gem",
+    ],
+    "co2": ["co2"],
+    "ch4": ["ch4"],
     "ndvi": ["ndvi"],
-    "soil_moisture": ["soil_moisture", "swvl1", "sm"],
-    "lst": ["lst", "land_surface_temperature"],
+    "soil_moisture": [
+        "soil_moisture",
+        "swvl1",
+        "sm",
+    ],
+    "lst": [
+        "lst",
+        "land_surface_temperature",
+    ],
 }
 
 
-# ============================================================
-# DATA DISCOVERY
-# ============================================================
-
 def open_data(path: str):
-    """
-    Open NetCDF, GRIB-compatible datasets or CSV files.
-    """
-
     path = Path(path)
 
     if not path.exists():
-        raise FileNotFoundError(f"Data file not found: {path}")
+        raise FileNotFoundError(
+            f"Data file not found: {path}"
+        )
 
     suffix = path.suffix.lower()
 
-    if suffix in [".nc", ".nc4", ".netcdf"]:
+    if suffix in [
+        ".nc",
+        ".nc4",
+        ".netcdf",
+    ]:
         return xr.open_dataset(path)
 
     if suffix == ".csv":
         return pd.read_csv(path)
 
     raise ValueError(
-        f"Unsupported file format: {suffix}. "
-        "Use NetCDF (.nc) or CSV."
+        f"Unsupported format: {suffix}"
     )
 
 
-def detect_variable(ds, requested: Optional[str] = None):
-    """
-    Identify the requested variable or automatically find
-    the first suitable data variable.
-    """
-
+def detect_variable(
+    ds,
+    requested: Optional[str] = None,
+):
     if isinstance(ds, pd.DataFrame):
+
         columns = list(ds.columns)
 
-        if requested and requested in columns:
+        if requested in columns:
             return requested
 
-        for canonical, aliases in VARIABLE_ALIASES.items():
-            for alias in aliases:
-                for col in columns:
-                    if col.lower() == alias.lower():
-                        return col
+        lower_map = {
+            str(c).lower(): c
+            for c in columns
+        }
 
-        numeric = ds.select_dtypes(include=np.number).columns
+        if requested:
+            aliases = VARIABLE_ALIASES.get(
+                requested.lower(),
+                [],
+            )
+
+            for alias in aliases:
+                if alias.lower() in lower_map:
+                    return lower_map[
+                        alias.lower()
+                    ]
+
+        for aliases in VARIABLE_ALIASES.values():
+            for alias in aliases:
+                if alias.lower() in lower_map:
+                    return lower_map[
+                        alias.lower()
+                    ]
+
+        numeric = ds.select_dtypes(
+            include=np.number
+        ).columns
 
         if len(numeric):
             return numeric[0]
 
-        raise ValueError("No numeric variable found in CSV.")
+        raise ValueError(
+            "No numeric variable found."
+        )
 
     variables = list(ds.data_vars)
 
     if requested:
+
         if requested in variables:
             return requested
 
-        aliases = VARIABLE_ALIASES.get(requested, [])
+        aliases = VARIABLE_ALIASES.get(
+            requested.lower(),
+            [],
+        )
 
         for alias in aliases:
             if alias in variables:
                 return alias
 
-    # automatic detection
-    for canonical, aliases in VARIABLE_ALIASES.items():
+            for v in variables:
+                if v.lower() == alias.lower():
+                    return v
+
+    for aliases in VARIABLE_ALIASES.values():
+
         for alias in aliases:
-            if alias in variables:
-                return alias
+
+            for v in variables:
+
+                if v.lower() == alias.lower():
+                    return v
 
     if not variables:
-        raise ValueError("Dataset contains no data variables.")
+        raise ValueError(
+            "Dataset contains no data variables."
+        )
 
     return variables[0]
 
 
-# ============================================================
-# COORDINATE DETECTION
-# ============================================================
-
 def detect_lat_lon(ds):
+
     lat_candidates = [
         "latitude",
         "lat",
@@ -152,26 +228,33 @@ def detect_lat_lon(ds):
     ]
 
     lat = next(
-        (x for x in lat_candidates if x in ds.coords or x in ds.dims),
+        (
+            x
+            for x in lat_candidates
+            if x in ds.coords
+            or x in ds.dims
+        ),
         None,
     )
 
     lon = next(
-        (x for x in lon_candidates if x in ds.coords or x in ds.dims),
+        (
+            x
+            for x in lon_candidates
+            if x in ds.coords
+            or x in ds.dims
+        ),
         None,
     )
 
     if lat is None or lon is None:
         raise ValueError(
-            "Could not identify latitude/longitude coordinates."
+            "Latitude/longitude coordinates "
+            "could not be identified."
         )
 
     return lat, lon
 
-
-# ============================================================
-# TIME DETECTION
-# ============================================================
 
 def detect_time(ds):
 
@@ -183,116 +266,335 @@ def detect_time(ds):
     ]
 
     for candidate in candidates:
-        if candidate in ds.coords or candidate in ds.dims:
+
+        if (
+            candidate in ds.coords
+            or candidate in ds.dims
+        ):
             return candidate
 
     return None
 
 
-# ============================================================
-# REGION SUBSETTING
-# ============================================================
-
 def subset_region(
     data,
-    lat_min: Optional[float] = None,
-    lat_max: Optional[float] = None,
-    lon_min: Optional[float] = None,
-    lon_max: Optional[float] = None,
+    lat_min=None,
+    lat_max=None,
+    lon_min=None,
+    lon_max=None,
 ):
 
-    if isinstance(data, pd.DataFrame):
+    if isinstance(
+        data,
+        pd.DataFrame,
+    ):
         return data
 
     lat, lon = detect_lat_lon(data)
 
     if lat_min is None:
-        lat_min = float(data[lat].min())
+        lat_min = float(
+            data[lat].min()
+        )
 
     if lat_max is None:
-        lat_max = float(data[lat].max())
+        lat_max = float(
+            data[lat].max()
+        )
 
     if lon_min is None:
-        lon_min = float(data[lon].min())
+        lon_min = float(
+            data[lon].min()
+        )
 
     if lon_max is None:
-        lon_max = float(data[lon].max())
+        lon_max = float(
+            data[lon].max()
+        )
 
-    lat_values = data[lat].values
+    values = data[lat].values
 
-    if lat_values[0] < lat_values[-1]:
-        lat_slice = slice(lat_min, lat_max)
+    if values[0] < values[-1]:
+        lat_slice = slice(
+            lat_min,
+            lat_max,
+        )
     else:
-        lat_slice = slice(lat_max, lat_min)
+        lat_slice = slice(
+            lat_max,
+            lat_min,
+        )
 
     return data.sel(
         {
             lat: lat_slice,
-            lon: slice(lon_min, lon_max),
+            lon: slice(
+                lon_min,
+                lon_max,
+            ),
         }
     )
 
 
-# ============================================================
-# UNIT CONVERSION
-# ============================================================
+def convert_units(
+    data,
+    variable,
+    target_unit=None,
+):
 
-def convert_units(data, variable: str, target_unit: Optional[str] = None):
-
-    if target_unit is None:
+    if not target_unit:
         return data
 
-    variable_lower = variable.lower()
+    units = str(
+        getattr(data, "attrs", {}).get(
+            "units",
+            "",
+        )
+    ).lower()
 
-    # Kelvin → Celsius
-    if target_unit.lower() in ["c", "°c", "celsius"]:
+    target = target_unit.lower()
 
-        if hasattr(data, "attrs"):
-            units = str(data.attrs.get("units", "")).lower()
+    if target in [
+        "c",
+        "°c",
+        "celsius",
+    ]:
 
-            if units in ["k", "kelvin"]:
-                data = data - 273.15
-                data.attrs["units"] = "°C"
+        if units in [
+            "k",
+            "kelvin",
+        ]:
 
-    # Pa → hPa
-    if target_unit.lower() == "hpa":
+            data = data - 273.15
+            data.attrs["units"] = "°C"
 
-        if hasattr(data, "attrs"):
-            units = str(data.attrs.get("units", "")).lower()
+    elif target == "hpa":
 
-            if units in ["pa", "pascal", "pascals"]:
-                data = data / 100.0
-                data.attrs["units"] = "hPa"
+        if units in [
+            "pa",
+            "pascal",
+            "pascals",
+        ]:
+
+            data = data / 100
+            data.attrs["units"] = "hPa"
 
     return data
 
 
-# ============================================================
-# SPATIAL MAP
-# ============================================================
-
-def scientific_map(
-    data,
-    variable: str,
-    output_path: str,
-    title: Optional[str] = None,
-    cmap: str = "RdYlBu_r",
+def get_series(
+    field,
+    latitude=None,
+    longitude=None,
 ):
 
-    if isinstance(data, pd.DataFrame):
-        raise ValueError("Scientific spatial maps require gridded data.")
+    if isinstance(
+        field,
+        pd.DataFrame,
+    ):
 
-    lat, lon = detect_lat_lon(data)
+        time_column = None
 
-    field = data
+        for candidate in [
+            "time",
+            "date",
+            "datetime",
+            "valid_time",
+        ]:
 
-    # If time exists, use temporal mean
+            if candidate in field.columns:
+                time_column = candidate
+                break
+
+        if time_column:
+
+            field = field.copy()
+
+            field[
+                time_column
+            ] = pd.to_datetime(
+                field[time_column]
+            )
+
+            field = field.set_index(
+                time_column
+            )
+
+        numeric = field.select_dtypes(
+            include=np.number
+        )
+
+        if numeric.empty:
+            raise ValueError(
+                "No numeric data available."
+            )
+
+        return numeric.iloc[:, 0].dropna()
+
+    lat, lon = detect_lat_lon(field)
+
+    if (
+        latitude is not None
+        and longitude is not None
+    ):
+
+        field = field.sel(
+            {
+                lat: latitude,
+                lon: longitude,
+            },
+            method="nearest",
+        )
+
+    else:
+
+        field = field.mean(
+            dim=[
+                lat,
+                lon,
+            ],
+            skipna=True,
+        )
+
     time_dim = detect_time(field)
 
-    if time_dim and time_dim in field.dims:
-        field = field.mean(dim=time_dim)
+    if time_dim is None:
+        raise ValueError(
+            "No time dimension found."
+        )
 
-    fig = plt.figure(figsize=(11, 8))
+    series = field.squeeze()
+
+    if hasattr(
+        series,
+        "to_pandas",
+    ):
+        series = series.to_pandas()
+
+    return series.dropna()
+
+
+def calculate_statistics(series):
+
+    values = np.asarray(
+        series.values,
+        dtype=float,
+    )
+
+    values = values[
+        np.isfinite(values)
+    ]
+
+    if len(values) == 0:
+        return {}
+
+    return {
+        "samples": int(len(values)),
+        "minimum": float(
+            np.min(values)
+        ),
+        "maximum": float(
+            np.max(values)
+        ),
+        "mean": float(
+            np.mean(values)
+        ),
+        "median": float(
+            np.median(values)
+        ),
+        "std": float(
+            np.std(values)
+        ),
+        "p05": float(
+            np.percentile(values, 5)
+        ),
+        "p25": float(
+            np.percentile(values, 25)
+        ),
+        "p75": float(
+            np.percentile(values, 75)
+        ),
+        "p95": float(
+            np.percentile(values, 95)
+        ),
+    }
+
+
+def trend_statistics(series):
+
+    from scipy.stats import linregress
+
+    values = np.asarray(
+        series.values,
+        dtype=float,
+    )
+
+    mask = np.isfinite(values)
+
+    values = values[mask]
+
+    if len(values) < 3:
+        return {}
+
+    x = np.arange(len(values))
+
+    result = linregress(
+        x,
+        values,
+    )
+
+    return {
+        "slope_per_step": float(
+            result.slope
+        ),
+        "intercept": float(
+            result.intercept
+        ),
+        "r": float(result.rvalue),
+        "r_squared": float(
+            result.rvalue ** 2
+        ),
+        "p_value": float(
+            result.pvalue
+        ),
+        "stderr": float(
+            result.stderr
+        ),
+    }
+
+
+def scientific_map(
+    field,
+    variable,
+    output_path,
+    title=None,
+    cmap="RdYlBu_r",
+):
+
+    if isinstance(
+        field,
+        pd.DataFrame,
+    ):
+        raise ValueError(
+            "Spatial map requires gridded data."
+        )
+
+    lat, lon = detect_lat_lon(field)
+
+    time_dim = detect_time(field)
+
+    if (
+        time_dim
+        and time_dim in field.dims
+    ):
+        field = field.mean(
+            dim=time_dim,
+            skipna=True,
+        )
+
+    fig = plt.figure(
+        figsize=(11, 8),
+    )
 
     if CARTOPY_AVAILABLE:
 
@@ -300,13 +602,20 @@ def scientific_map(
             projection=ccrs.PlateCarree()
         )
 
-        plot = field.plot.contourf(
+        field.plot.contourf(
             ax=ax,
             transform=ccrs.PlateCarree(),
+            levels=21,
             cmap=cmap,
-            levels=20,
             extend="both",
-            add_colorbar=True,
+            cbar_kwargs={
+                "label": str(
+                    field.attrs.get(
+                        "units",
+                        "",
+                    )
+                )
+            },
         )
 
         ax.coastlines(
@@ -335,18 +644,23 @@ def scientific_map(
 
         field.plot.contourf(
             ax=ax,
+            levels=21,
             cmap=cmap,
-            levels=20,
             extend="both",
-            add_colorbar=True,
         )
 
-        ax.set_xlabel("Longitude")
-        ax.set_ylabel("Latitude")
+        ax.set_xlabel(
+            "Longitude"
+        )
+
+        ax.set_ylabel(
+            "Latitude"
+        )
 
     ax.set_title(
-        title or f"TERRA Scientific Map — {variable}",
-        fontsize=14,
+        title
+        or f"TERRA Scientific Map — {variable}",
+        fontsize=15,
         fontweight="bold",
     )
 
@@ -356,6 +670,7 @@ def scientific_map(
         output_path,
         dpi=600,
         bbox_inches="tight",
+        facecolor="white",
     )
 
     plt.close()
@@ -363,79 +678,71 @@ def scientific_map(
     return output_path
 
 
-# ============================================================
-# TIME SERIES
-# ============================================================
-
 def time_series(
-    data,
-    variable: str,
-    output_path: str,
-    latitude: Optional[float] = None,
-    longitude: Optional[float] = None,
+    field,
+    variable,
+    output_path,
+    latitude=None,
+    longitude=None,
 ):
 
-    if isinstance(data, pd.DataFrame):
+    series = get_series(
+        field,
+        latitude,
+        longitude,
+    )
 
-        if "date" in data.columns:
-            data["date"] = pd.to_datetime(data["date"])
-            data = data.set_index("date")
-
-        series = data[variable]
-
-    else:
-
-        lat, lon = detect_lat_lon(data)
-
-        field = data
-
-        if latitude is not None and longitude is not None:
-
-            field = field.sel(
-                {
-                    lat: latitude,
-                    lon: longitude,
-                },
-                method="nearest",
-            )
-
-        time_dim = detect_time(field)
-
-        if time_dim is None:
-            raise ValueError(
-                "No time coordinate found."
-            )
-
-        series = field.squeeze()
-
-        if hasattr(series, "to_pandas"):
-            series = series.to_pandas()
-
-    series = series.dropna()
+    units = str(
+        getattr(
+            field,
+            "attrs",
+            {},
+        ).get(
+            "units",
+            "",
+        )
+    )
 
     fig, ax = plt.subplots(
-        figsize=(11, 5.5)
+        figsize=(12, 5.8),
     )
 
     ax.plot(
         series.index,
         series.values,
-        linewidth=1.5,
+        linewidth=1.6,
     )
 
     ax.set_title(
-        f"TERRA Time Series — {variable}",
-        fontsize=14,
+        f"TERRA — {variable}",
+        fontsize=15,
         fontweight="bold",
     )
 
-    ax.set_xlabel("Time")
-    ax.set_ylabel(variable)
+    ax.set_xlabel(
+        "Time"
+    )
+
+    ax.set_ylabel(
+        f"{variable} ({units})"
+        if units
+        else variable
+    )
 
     ax.grid(
-        alpha=0.3,
+        True,
         linestyle="--",
+        linewidth=0.6,
+        alpha=0.35,
     )
+
+    ax.spines[
+        "top"
+    ].set_visible(False)
+
+    ax.spines[
+        "right"
+    ].set_visible(False)
 
     plt.tight_layout()
 
@@ -443,98 +750,116 @@ def time_series(
         output_path,
         dpi=600,
         bbox_inches="tight",
+        facecolor="white",
     )
 
     plt.close()
 
-    return output_path
+    return {
+        "output": output_path,
+        "statistics": calculate_statistics(
+            series
+        ),
+        "trend": trend_statistics(
+            series
+        ),
+    }
 
-
-# ============================================================
-# ANOMALY
-# ============================================================
 
 def anomaly_map(
-    data,
-    variable: str,
-    output_path: str,
+    field,
+    variable,
+    output_path,
 ):
 
-    if isinstance(data, pd.DataFrame):
-        raise ValueError("Anomaly maps require gridded data.")
-
-    time_dim = detect_time(data)
+    time_dim = detect_time(field)
 
     if time_dim is None:
         raise ValueError(
-            "Anomaly analysis requires a time dimension."
+            "Anomaly requires time."
         )
 
-    climatology = data.mean(dim=time_dim)
+    climatology = field.mean(
+        dim=time_dim,
+        skipna=True,
+    )
 
-    latest = data.isel(
+    latest = field.isel(
         {
             time_dim: -1
         }
     )
 
-    anomaly = latest - climatology
+    anomaly = (
+        latest - climatology
+    )
 
     return scientific_map(
         anomaly,
-        variable=f"{variable} anomaly",
-        output_path=output_path,
-        title=f"TERRA Anomaly — {variable}",
-        cmap="RdBu_r",
+        f"{variable} anomaly",
+        output_path,
+        f"TERRA Anomaly — {variable}",
+        "RdBu_r",
     )
 
 
-# ============================================================
-# SEASONAL MAP
-# ============================================================
-
 def seasonal_map(
-    data,
-    variable: str,
-    output_path: str,
+    field,
+    variable,
+    output_path,
 ):
 
-    if isinstance(data, pd.DataFrame):
-        raise ValueError("Seasonal maps require gridded data.")
-
-    time_dim = detect_time(data)
+    time_dim = detect_time(field)
 
     if time_dim is None:
         raise ValueError(
             "Seasonal analysis requires time."
         )
 
-    seasonal = data.groupby(
+    seasonal = field.groupby(
         f"{time_dim}.season"
-    ).mean(dim=time_dim)
+    ).mean(
+        dim=time_dim,
+        skipna=True,
+    )
 
-    seasons = ["DJF", "MAM", "JJA", "SON"]
+    seasons = [
+        "DJF",
+        "MAM",
+        "JJA",
+        "SON",
+    ]
 
-    fig = plt.figure(figsize=(13, 10))
+    fig, axes = plt.subplots(
+        2,
+        2,
+        figsize=(13, 10),
+        subplot_kw=(
+            {
+                "projection":
+                ccrs.PlateCarree()
+            }
+            if CARTOPY_AVAILABLE
+            else {}
+        ),
+    )
 
-    for i, season in enumerate(seasons, 1):
+    axes = axes.flatten()
+
+    for ax, season in zip(
+        axes,
+        seasons,
+    ):
 
         if CARTOPY_AVAILABLE:
-
-            ax = fig.add_subplot(
-                2,
-                2,
-                i,
-                projection=ccrs.PlateCarree(),
-            )
 
             seasonal.sel(
                 season=season
             ).plot.contourf(
                 ax=ax,
                 transform=ccrs.PlateCarree(),
-                cmap="RdYlBu_r",
                 levels=20,
+                cmap="RdYlBu_r",
                 extend="both",
                 add_colorbar=True,
             )
@@ -551,22 +876,17 @@ def seasonal_map(
 
         else:
 
-            ax = fig.add_subplot(
-                2,
-                2,
-                i,
-            )
-
             seasonal.sel(
                 season=season
             ).plot.contourf(
                 ax=ax,
-                cmap="RdYlBu_r",
                 levels=20,
+                cmap="RdYlBu_r",
+                extend="both",
             )
 
         ax.set_title(
-            f"({chr(96+i)}) {season}",
+            f"({chr(97 + seasons.index(season))}) {season}",
             fontweight="bold",
         )
 
@@ -582,16 +902,13 @@ def seasonal_map(
         output_path,
         dpi=600,
         bbox_inches="tight",
+        facecolor="white",
     )
 
     plt.close()
 
     return output_path
 
-
-# ============================================================
-# SOM
-# ============================================================
 
 def train_som(
     data,
@@ -605,18 +922,25 @@ def train_som(
             "MiniSom is not installed."
         )
 
-    if isinstance(data, xr.DataArray):
-
-        values = data.values
-
-    else:
-
-        values = np.asarray(data)
+    values = (
+        data.values
+        if isinstance(
+            data,
+            xr.DataArray,
+        )
+        else np.asarray(data)
+    )
 
     values = np.asarray(
         values,
         dtype=float,
     )
+
+    if values.ndim < 2:
+        raise ValueError(
+            "SOM requires at least "
+            "two dimensions."
+        )
 
     values = values.reshape(
         values.shape[0],
@@ -633,7 +957,9 @@ def train_som(
         axis=0,
     )
 
-    std[std == 0] = 1
+    std[
+        std == 0
+    ] = 1
 
     normalized = (
         values - mean
@@ -666,34 +992,45 @@ def train_som(
         for row in normalized
     ]
 
+    qe = float(
+        som.quantization_error(
+            normalized
+        )
+    )
+
     return {
         "grid_x": x,
         "grid_y": y,
         "iterations": iterations,
         "samples": len(winners),
+        "quantization_error": qe,
         "winners": [
-            [int(a), int(b)]
+            [
+                int(a),
+                int(b),
+            ]
             for a, b in winners
         ],
     }
 
 
-# ============================================================
-# DATASET SUMMARY
-# ============================================================
-
-def dataset_summary(
-    path: str,
-):
+def dataset_summary(path):
 
     ds = open_data(path)
 
-    if isinstance(ds, pd.DataFrame):
+    if isinstance(
+        ds,
+        pd.DataFrame,
+    ):
 
         return {
             "format": "CSV",
-            "rows": int(len(ds)),
-            "columns": list(ds.columns),
+            "rows": int(
+                len(ds)
+            ),
+            "columns": list(
+                ds.columns
+            ),
             "variables": list(
                 ds.select_dtypes(
                     include=np.number
@@ -709,7 +1046,9 @@ def dataset_summary(
             k: int(v)
             for k, v in ds.sizes.items()
         },
-        "variables": list(ds.data_vars),
+        "variables": list(
+            ds.data_vars
+        ),
         "latitude": lat,
         "longitude": lon,
         "time": detect_time(ds),
