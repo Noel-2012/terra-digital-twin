@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 .env
 outputs/
+*.nc
+uploads/
+data/uploads/
